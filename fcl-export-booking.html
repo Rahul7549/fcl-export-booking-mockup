@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>FCL Export Booking — Request a Quote · Cargostar</title>
+
+<!-- Tailwind (CDN) + brand theme extension matching tailwind.config.js recommendation -->
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: { extend: {
+      colors: {
+        brand:   { DEFAULT:'#2A3E8A', 50:'#EEF2FA', 100:'#E9EDF7', 600:'#2A3E8A', 700:'#22336f' },
+        brandgreen:{ DEFAULT:'#78B947' },
+        ok:'#10b981', info:'#3b82f6', warn:'#f59e0b', err:'#ef4444',
+        ink:'#0f172a', muted:'#64748b',
+      },
+      borderRadius:{ card:'1rem', control:'.75rem' },
+      boxShadow:{ card:'0 1px 2px rgba(2,6,23,.06)','card-hover':'0 6px 16px rgba(2,6,23,.08)', pop:'0 8px 24px rgba(2,6,23,.10)' },
+    }}
+  }
+</script>
+
+<!-- Lucide icons (matches app's data-lucide convention) -->
+<script src="https://unpkg.com/lucide@latest"></script>
+
+<style>
+  /* ===== Design tokens (from src/styles.scss :root) ===== */
+  :root{
+    --brand:#2A3E8A; --brand-primary:#2A3E8A; --brand-secondary:#78B947;
+    --accent-yellow:#EDDA66; --accent-rose:#f43f5e;
+    --ok:#10b981; --info:#3b82f6; --warn:#f59e0b; --err:#ef4444;
+    --ink:#0f172a; --muted:#64748b; --border:#e2e8f0; --panel:#fff;
+    --brand-50:#EEF2FA; --surface-subtle:#f8fafc; --focus-ring:rgba(42,62,138,.35);
+  }
+  body{ background:#f4f6fb; color:var(--ink); font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; }
+
+  /* ===== Primitives copied/adapted from the live component SCSS ===== */
+  .card{ border-radius:1rem; background:#fff; padding:1.25rem; box-shadow:0 1px 2px rgba(0,0,0,.04); border:1px solid rgba(226,232,240,.7); transition:box-shadow .2s ease; }
+  .card:hover{ box-shadow:0 6px 16px rgba(2,6,23,.08); }
+  .card--tight{ padding:1rem; }
+
+  .btn{ display:inline-flex; align-items:center; justify-content:center; gap:.5rem; border-radius:.75rem; padding:.5rem .875rem; font-size:.875rem; font-weight:600; border:1px solid transparent; background:#fff; color:#334155; transition:filter .15s ease, background .15s ease; cursor:pointer; }
+  .btn[disabled]{ opacity:.4; cursor:not-allowed; }
+  .btn-primary{ background:var(--brand-primary); color:#fff; border-color:var(--brand-primary); }
+  .btn-primary:hover{ filter:brightness(.95); }
+  .btn-secondary{ background:var(--brand-secondary); color:#0b1b13; border-color:var(--brand-secondary); }
+  .btn-secondary:hover{ filter:brightness(1.08); }
+  .btn-ghost{ border-color:#e2e8f0; }
+  .btn-ghost:hover{ background:#f8fafc; }
+  .btn-sm{ padding:.375rem .625rem; font-size:.8125rem; border-radius:.625rem; }
+  .btn-soft-primary{ background:rgba(42,62,138,.08); color:var(--brand-primary); border-color:rgba(42,62,138,.15); }
+  .btn-soft-primary:hover{ background:rgba(42,62,138,.12); }
+
+  .pill{ display:inline-flex; align-items:center; gap:.5rem; border-radius:9999px; padding:.375rem .75rem; border:1px solid #e2e8f0; color:#475569; font-size:.75rem; font-weight:500; background:#fff; cursor:pointer; }
+  .pill--on{ border-color:var(--brand-primary); color:var(--brand-primary); background:#EEF2FA; }
+
+  .badge{ display:inline-flex; align-items:center; gap:.25rem; border-radius:9999px; padding:.25rem .625rem; font-size:.75rem; font-weight:600; line-height:1; border:1px solid transparent; }
+  .badge--active{ background:#E9EDF7; color:#2A3E8A; border-color:#C9D4EE; }
+  .badge--delivered{ background:#ECF8E8; color:#3F7F22; border-color:#CBEEC0; }
+  .badge--atrisk{ background:#FFFAE6; color:#8F6A00; border-color:#F0E39F; }
+
+  .chip{ display:inline-flex; align-items:center; gap:.4rem; border-radius:9999px; padding:.375rem .625rem; font-size:.78rem; font-weight:700; border:1px solid transparent; line-height:1; }
+  .chip--mode{ background:#eef2fa; color:var(--brand-primary); border-color:#d8e0f3; }
+  .chip-strong{ display:inline-flex; align-items:center; gap:.4rem; padding:.25rem .8rem; border-radius:9999px; border:2px solid var(--brand); font-size:.8rem; background:#eef2fa; color:var(--brand); font-weight:800; letter-spacing:.03em; }
+
+  /* Section accent slab + header */
+  .section-accent{ position:relative; border-radius:1rem; background:#fff; border:1px solid rgba(226,232,240,.7); box-shadow:0 1px 2px rgba(0,0,0,.04); }
+  .section-accent::before{ content:""; position:absolute; left:1rem; right:1rem; top:0; height:3px; border-radius:9999px; background:var(--brand-primary); }
+  .section-head{ display:flex; align-items:center; gap:.5rem; margin-bottom:.5rem; }
+  .section-head .ico{ width:26px; height:26px; border-radius:9999px; display:flex; align-items:center; justify-content:center; background:rgba(42,62,138,.10); color:var(--brand-primary); }
+  .section-head .ico svg{ width:15px; height:15px; }
+  .section-head h3{ margin:0; font-size:1rem; font-weight:800; color:#0f172a; }
+
+  /* Progress rail / step tracker (from shipment dashboard SCSS) */
+  .progress-rail{ display:flex; align-items:center; gap:.5rem; }
+  .pr-step{ display:flex; align-items:center; gap:.5rem; cursor:pointer; }
+  .pr-dot{ height:1.75rem; width:1.75rem; border-radius:9999px; display:inline-flex; align-items:center; justify-content:center; font-size:.78rem; font-weight:800; background:#e2e8f0; color:#475569; transition:all .2s ease; flex:none; }
+  .pr-step.is-active .pr-dot{ background:var(--brand-primary); color:#fff; box-shadow:0 0 0 4px rgba(42,62,138,.14); }
+  .pr-step.is-done .pr-dot{ background:var(--ok); color:#fff; }
+  .pr-label{ font-size:.78rem; color:#475569; font-weight:600; white-space:nowrap; }
+  .pr-step.is-active .pr-label{ color:var(--brand-primary); font-weight:700; }
+  .pr-line{ height:2px; width:2.5rem; background:#e2e8f0; border-radius:9999px; }
+  .pr-line.on{ background:var(--brand-primary); }
+
+  /* ===== Form primitives (the gap noted in the spec — defined here for the mockup) ===== */
+  .field-label{ font-size:.7rem; letter-spacing:.05em; text-transform:uppercase; color:#64748b; font-weight:700; display:flex; align-items:center; gap:.35rem; margin-bottom:.35rem; }
+  .field-label .req{ color:var(--err); }
+  .input, .select, textarea.input{ width:100%; border:1px solid var(--border); border-radius:.75rem; padding:.6rem .75rem; font-size:.875rem; color:var(--ink); background:#fff; outline:none; transition:border-color .15s, box-shadow .15s; }
+  .input:focus, .select:focus, textarea.input:focus{ border-color:var(--brand-primary); box-shadow:0 0 0 3px var(--focus-ring); }
+  .input::placeholder{ color:#cbd5e1; }
+  .field-hint{ font-size:.72rem; color:#94a3b8; margin-top:.3rem; }
+  .input-group{ display:flex; align-items:stretch; }
+  .input-group .input{ border-top-right-radius:0; border-bottom-right-radius:0; }
+  .input-addon{ display:inline-flex; align-items:center; padding:0 .6rem; border:1px solid var(--border); border-left:0; border-top-right-radius:.75rem; border-bottom-right-radius:.75rem; background:#f8fafc; color:#64748b; font-size:.8rem; font-weight:700; }
+  .unit-select{ border:0; background:transparent; font-weight:800; color:#475569; font-size:.78rem; padding:0 .45rem; height:100%; outline:none; cursor:pointer; }
+  .cc-select{ font-weight:700; color:#475569; }
+
+  /* Radio cards (service type) */
+  .radio-card{ position:relative; border:1px solid var(--border); border-radius:.875rem; padding:.85rem .9rem; cursor:pointer; background:#fff; transition:all .15s ease; display:flex; flex-direction:column; gap:.35rem; }
+  .radio-card:hover{ border-color:#c9d4ee; }
+  .radio-card.is-on{ border-color:var(--brand-primary); background:var(--brand-50); box-shadow:0 0 0 1px var(--brand-primary) inset; }
+  .radio-card .rc-icons{ display:flex; align-items:center; gap:.25rem; color:var(--brand-primary); }
+  .radio-card .rc-title{ font-weight:700; font-size:.9rem; color:#0f172a; }
+  .radio-card .rc-sub{ font-size:.72rem; color:#64748b; }
+  .radio-card .rc-check{ position:absolute; top:.6rem; right:.6rem; color:var(--brand-primary); opacity:0; transition:opacity .15s; }
+  .radio-card.is-on .rc-check{ opacity:1; }
+
+  /* Toggle switch */
+  .switch{ position:relative; display:inline-block; width:2.6rem; height:1.5rem; flex:none; }
+  .switch input{ opacity:0; width:0; height:0; }
+  .switch .track{ position:absolute; inset:0; background:#cbd5e1; border-radius:9999px; transition:.2s; }
+  .switch .track::before{ content:""; position:absolute; height:1.1rem; width:1.1rem; left:.2rem; top:.2rem; background:#fff; border-radius:9999px; transition:.2s; box-shadow:0 1px 2px rgba(0,0,0,.2); }
+  .switch input:checked + .track{ background:var(--brand-primary); }
+  .switch input:checked + .track::before{ transform:translateX(1.1rem); }
+  .switch input:focus-visible + .track{ box-shadow:0 0 0 3px var(--focus-ring); }
+  .toggle-row{ display:flex; align-items:flex-start; gap:.75rem; padding:.75rem; border:1px solid var(--border); border-radius:.875rem; background:#fff; }
+  .toggle-row.is-on{ border-color:#c9d4ee; background:var(--brand-50); }
+
+  /* Segmented control (from .segmented) */
+  .segmented{ display:inline-flex; background:#fff; border:1px solid #e2e8f0; border-radius:9999px; padding:3px; }
+  .segmented button{ border:0; background:transparent; padding:.4rem .9rem; border-radius:9999px; font-size:.8125rem; font-weight:600; color:#475569; cursor:pointer; }
+  .segmented button.active{ background:var(--brand-primary); color:#fff; }
+
+  /* Number stepper */
+  .stepper{ display:inline-flex; align-items:center; border:1px solid var(--border); border-radius:.75rem; overflow:hidden; }
+  .stepper button{ width:2rem; height:2.25rem; background:#f8fafc; border:0; cursor:pointer; color:#475569; font-weight:700; }
+  .stepper button:hover{ background:#eef2fa; color:var(--brand-primary); }
+  .stepper input{ width:2.75rem; text-align:center; border:0; border-left:1px solid var(--border); border-right:1px solid var(--border); height:2.25rem; font-weight:700; outline:none; }
+
+  /* KV summary rows */
+  .sum-row{ display:flex; justify-content:space-between; gap:1rem; padding:.45rem 0; border-bottom:1px dashed #eef2f7; font-size:.85rem; }
+  .sum-row:last-child{ border-bottom:0; }
+  .sum-row .k{ color:#64748b; font-weight:600; }
+  .sum-row .v{ color:#0f172a; font-weight:700; text-align:right; }
+
+  /* container line card */
+  .cargo-line{ border:1px solid var(--border); border-radius:.875rem; padding:.9rem; background:#fbfdff; }
+
+  /* sticky right column */
+  @media (min-width:1024px){ .sticky-summary{ position:sticky; top:1rem; } }
+
+  /* tooltip */
+  .tip{ position:relative; }
+  .tip .tip-body{ visibility:hidden; opacity:0; position:absolute; bottom:130%; left:0; width:230px; background:#0f172a; color:#fff; font-size:.72rem; font-weight:500; line-height:1.4; padding:.5rem .6rem; border-radius:.5rem; transition:.15s; z-index:20; }
+  .tip:hover .tip-body{ visibility:visible; opacity:1; }
+
+  :focus-visible{ outline:2px solid var(--brand-primary); outline-offset:2px; }
+  .skeleton{ background:linear-gradient(90deg,#e5e7eb 0%,#f3f4f6 50%,#e5e7eb 100%); background-size:1000px 100%; animation:shimmer 1.5s infinite linear; border-radius:6px;}
+  @keyframes shimmer{0%{background-position:-500px 0}100%{background-position:500px 0}}
+  .flash{ animation:flash .6s ease; }
+  @keyframes flash{ 0%{background:#fef9c3} 100%{background:transparent} }
+</style>
+</head>
+
+<body>
+
+<!-- ============ HEADER ============ -->
+<header class="border-b border-slate-200 bg-white sticky top-0 z-30">
+  <div class="mx-auto max-w-7xl px-4 py-3 flex items-center gap-4">
+    <a href="#" class="flex items-center gap-1.5 text-slate-600 font-medium hover:text-slate-900 transition">
+      <i data-lucide="arrow-left" class="w-4 h-4"></i> Back to Dashboard
+    </a>
+    <div class="ml-auto flex items-center gap-2 text-slate-500 text-sm">
+      <span class="chip chip--mode"><i data-lucide="ship" class="w-4 h-4"></i> FCL · Sea</span>
+      <span class="badge badge--active"><i data-lucide="arrow-up" class="w-3.5 h-3.5"></i> Export</span>
+    </div>
+  </div>
+</header>
+
+<main class="mx-auto max-w-7xl px-4 py-6">
+
+  <!-- Title row -->
+  <div class="flex flex-wrap items-end justify-between gap-3 mb-5">
+    <div>
+      <h1 class="text-2xl font-extrabold text-ink">Request an FCL Export Quote</h1>
+      <p class="text-sm text-muted mt-1">Full container load, outbound from the USA. We’ll respond with rates within 1 business day.</p>
+    </div>
+    <div class="segmented" role="tablist" aria-label="Quote mode">
+      <button class="active" role="tab" aria-selected="true">Detailed</button>
+      <button role="tab" aria-selected="false">Quick quote</button>
+    </div>
+  </div>
+
+  <!-- Step tracker -->
+  <div class="card card--tight mb-5 overflow-x-auto">
+    <div class="progress-rail" id="tracker">
+      <div class="pr-step is-active" data-step="1"><span class="pr-dot">1</span><span class="pr-label">Service &amp; Cargo</span></div>
+      <span class="pr-line"></span>
+      <div class="pr-step" data-step="2"><span class="pr-dot">2</span><span class="pr-label">Route</span></div>
+      <span class="pr-line"></span>
+      <div class="pr-step" data-step="3"><span class="pr-dot">3</span><span class="pr-label">Containers &amp; Customs</span></div>
+      <span class="pr-line"></span>
+      <div class="pr-step" data-step="4"><span class="pr-dot">4</span><span class="pr-label">Parties &amp; Review</span></div>
+    </div>
+  </div>
+
+  <!-- ============ 8 / 4 SHELL ============ -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+
+    <!-- LEFT: step content -->
+    <section class="lg:col-span-8 space-y-5">
+
+      <!-- ===== STEP 1 — Service & Cargo ===== -->
+      <div class="step-panel" data-step="1">
+        <div class="card">
+          <div class="section-head"><span class="ico"><i data-lucide="route"></i></span><h3>Service type</h3></div>
+          <p class="text-sm text-muted mb-3">Choose how far we handle the move. This decides what we ask for in the next step.</p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3" id="serviceCards">
+            <div class="radio-card" data-service="P2D" data-origin="port" data-dest="door">
+              <i data-lucide="check-circle-2" class="rc-check w-5 h-5"></i>
+              <div class="rc-icons"><i data-lucide="anchor" class="w-4 h-4"></i><i data-lucide="arrow-right" class="w-3.5 h-3.5"></i><i data-lucide="warehouse" class="w-4 h-4"></i></div>
+              <div class="rc-title">Port → Door</div>
+              <div class="rc-sub">US port to overseas address</div>
+            </div>
+            <div class="radio-card is-on" data-service="P2P" data-origin="port" data-dest="port">
+              <i data-lucide="check-circle-2" class="rc-check w-5 h-5"></i>
+              <div class="rc-icons"><i data-lucide="anchor" class="w-4 h-4"></i><i data-lucide="arrow-right" class="w-3.5 h-3.5"></i><i data-lucide="anchor" class="w-4 h-4"></i></div>
+              <div class="rc-title">Port → Port</div>
+              <div class="rc-sub">US port to overseas port</div>
+            </div>
+            <div class="radio-card" data-service="D2D" data-origin="door" data-dest="door">
+              <i data-lucide="check-circle-2" class="rc-check w-5 h-5"></i>
+              <div class="rc-icons"><i data-lucide="warehouse" class="w-4 h-4"></i><i data-lucide="arrow-right" class="w-3.5 h-3.5"></i><i data-lucide="warehouse" class="w-4 h-4"></i></div>
+              <div class="rc-title">Door → Door</div>
+              <div class="rc-sub">US pickup to overseas delivery</div>
+            </div>
+            <div class="radio-card" data-service="D2P" data-origin="door" data-dest="port">
+              <i data-lucide="check-circle-2" class="rc-check w-5 h-5"></i>
+              <div class="rc-icons"><i data-lucide="warehouse" class="w-4 h-4"></i><i data-lucide="arrow-right" class="w-3.5 h-3.5"></i><i data-lucide="anchor" class="w-4 h-4"></i></div>
+              <div class="rc-title">Door → Port</div>
+              <div class="rc-sub">US pickup to overseas port</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card mt-5">
+          <div class="section-head"><span class="ico"><i data-lucide="package-2"></i></span><h3>Commercial &amp; commodity</h3></div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="field-label">Incoterms <span class="req">*</span>
+                <span class="tip"><i data-lucide="info" class="w-3.5 h-3.5 text-slate-400"></i><span class="tip-body">Defines where seller responsibility ends. FOB, EXW &amp; CIF are most common for US ocean exports.</span></span>
+              </label>
+              <select class="select"><option>FOB — Free On Board</option><option>CIF — Cost, Insurance &amp; Freight</option><option>CFR — Cost &amp; Freight</option><option>EXW — Ex Works</option><option>FCA — Free Carrier</option><option>DAP — Delivered At Place</option><option>DDP — Delivered Duty Paid</option></select>
+            </div>
+            <div>
+              <label class="field-label">Commodity <span class="req">*</span></label>
+              <input class="input" placeholder="e.g. Furniture" />
+              <!-- HS code removed per request -->
+            </div>
+            <div>
+              <label class="field-label">Cargo category <span class="req">*</span></label>
+              <select class="select" id="cargoCategory"><option value="general">General cargo</option><option value="reefer">Perishable / Reefer</option><option value="hazmat">Hazardous (IMO)</option><option value="oog">Oversized / OOG</option><option value="highvalue">High value</option></select>
+            </div>
+<!-- Declared cargo value — commented out per request
+            <div>
+              <label class="field-label">Declared cargo value</label>
+              <div class="input-group"><input class="input" type="number" placeholder="0.00" /><span class="input-addon">USD</span></div>
+              <p class="field-hint">Used for insurance &amp; customs.</p>
+            </div>
+-->
+
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
+            <label class="toggle-row" id="dgRow">
+              <span class="switch"><input type="checkbox" id="dgToggle" /><span class="track"></span></span>
+              <span>
+                <span class="font-semibold text-sm text-ink flex items-center gap-1.5"><i data-lucide="flame" class="w-4 h-4 text-err"></i> Dangerous goods (IMDG)</span>
+                <span class="block text-xs text-muted mt-0.5">Hazardous / regulated cargo</span>
+              </span>
+            </label>
+            <label class="toggle-row" id="reeferRow">
+              <span class="switch"><input type="checkbox" id="reeferToggle" /><span class="track"></span></span>
+              <span>
+                <span class="font-semibold text-sm text-ink flex items-center gap-1.5"><i data-lucide="snowflake" class="w-4 h-4 text-info"></i> Temperature-controlled</span>
+                <span class="block text-xs text-muted mt-0.5">Reefer container required</span>
+              </span>
+            </label>
+          </div>
+
+          <!-- conditional: DG -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4 hidden" id="dgFields">
+            <div><label class="field-label">UN number <span class="req">*</span></label><input class="input" placeholder="e.g. UN1263" /></div>
+            <div><label class="field-label">IMO class <span class="req">*</span></label><select class="select"><option>Class 1 — Explosives</option><option>Class 3 — Flammable liquids</option><option>Class 8 — Corrosives</option><option>Class 9 — Miscellaneous</option></select></div>
+          </div>
+          <!-- conditional: reefer -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4 hidden" id="reeferFields">
+            <div><label class="field-label">Set temperature</label><div class="input-group"><input class="input" type="number" placeholder="-18" /><span class="input-addon">°C</span></div></div>
+            <div><label class="field-label">Ventilation / humidity</label><input class="input" placeholder="e.g. 25 CBM/h, 65% RH" /></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== STEP 2 — Route ===== -->
+      <div class="step-panel hidden" data-step="2">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <!-- Origin (US) -->
+          <div class="card">
+            <div class="section-head"><span class="ico"><i data-lucide="anchor"></i></span><h3>Origin · United States</h3></div>
+            <!-- port variant (US POL) -->
+            <div class="origin-port">
+              <label class="field-label">Port of loading (POL) <span class="req">*</span></label>
+              <select class="select"><option>USLAX · Los Angeles, CA</option><option>USLGB · Long Beach, CA</option><option>USNYC · New York / Newark, NJ</option><option>USSAV · Savannah, GA</option><option>USHOU · Houston, TX</option><option>USSEA · Seattle, WA</option><option>USORF · Norfolk, VA</option><option>USCHS · Charleston, SC</option></select>
+              <p class="field-hint">UNLOCODE · port name — same format as the dashboard origin filter.</p>
+            </div>
+            <!-- door variant — pickup ZIP only (Door→Port / Door→Door) -->
+            <div class="origin-door hidden mt-1">
+              <label class="field-label">Pickup ZIP code <span class="req">*</span></label>
+              <select class="select">
+                <option value="">Select pickup ZIP…</option>
+                <option>90021 · Los Angeles, CA</option>
+                <option>11430 · Jamaica / JFK, NY</option>
+                <option>07114 · Newark, NJ</option>
+                <option>30354 · Atlanta, GA</option>
+                <option>77032 · Houston, TX</option>
+                <option>98168 · Seattle, WA</option>
+                <option>60638 · Chicago, IL</option>
+                <option>33122 · Miami, FL</option>
+              </select>
+              <p class="field-hint">We’ll route from your pickup ZIP to the best US gateway port.</p>
+            </div>
+          </div>
+
+          <!-- Destination (overseas) -->
+          <div class="card">
+            <div class="section-head"><span class="ico"><i data-lucide="map-pin"></i></span><h3>Destination · Overseas</h3></div>
+            <div>
+              <label class="field-label">Port of discharge (POD) <span class="req">*</span></label>
+              <select class="select"><option>CNSHA · Shanghai, China</option><option>CNNGB · Ningbo, China</option><option>KRPUS · Busan, South Korea</option><option>SGSIN · Singapore</option><option>VNSGN · Ho Chi Minh, Vietnam</option><option>NLRTM · Rotterdam, Netherlands</option><option>DEHAM · Hamburg, Germany</option><option>INNSA · Nhava Sheva, India</option></select>
+            </div>
+            <!-- door variant (overseas delivery address) -->
+            <div class="dest-door hidden space-y-3 mt-3">
+              <div><label class="field-label">Delivery address <span class="req">*</span></label><input class="input" placeholder="Street, building, unit" /></div>
+              <div class="grid grid-cols-2 gap-3">
+                <div><label class="field-label">City <span class="req">*</span></label><input class="input" placeholder="Shanghai" /></div>
+                <div><label class="field-label">Postal code</label><input class="input" placeholder="200000" /></div>
+              </div>
+              <div><label class="field-label">Country <span class="req">*</span></label><input class="input" placeholder="China" /></div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <label class="toggle-row"><span class="switch"><input type="checkbox" /><span class="track"></span></span><span class="text-sm font-semibold text-ink">Residential / limited access</span></label>
+                <label class="toggle-row"><span class="switch"><input type="checkbox" /><span class="track"></span></span><span class="text-sm font-semibold text-ink">Tail-lift required</span></label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card mt-5">
+          <div class="section-head"><span class="ico"><i data-lucide="calendar-clock"></i></span><h3>Schedule</h3></div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="field-label">Cargo ready date <span class="req">*</span></label>
+              <div class="flex items-center gap-2">
+                <input class="input" type="date" />
+                <button class="pill" type="button">ASAP</button>
+              </div>
+            </div>
+            <div><label class="field-label">Target delivery date</label><input class="input" type="date" /></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== STEP 3 — Containers & Customs ===== -->
+      <div class="step-panel hidden" data-step="3">
+        <div class="card">
+          <div class="section-head"><span class="ico"><i data-lucide="container"></i></span><h3>Containers</h3>
+            <span class="ml-auto text-sm text-muted">Add a line per container type</span>
+          </div>
+
+          <div id="containerLines" class="space-y-3">
+            <!-- line template rendered by JS -->
+          </div>
+
+          <button class="btn btn-soft-primary btn-sm mt-3" id="addLine" type="button"><i data-lucide="plus" class="w-4 h-4"></i> Add container line</button>
+
+          <!-- totals -->
+          <div class="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div class="card card--tight bg-slate-50"><div class="field-label">Containers</div><div class="text-xl font-extrabold text-ink" id="tCount">2</div></div>
+            <div class="card card--tight bg-slate-50"><div class="field-label">TEU</div><div class="text-xl font-extrabold text-ink" id="tTeu">4</div></div>
+            <div class="card card--tight bg-slate-50"><div class="field-label">Total weight</div><div class="text-xl font-extrabold text-ink" id="tWeight">36,000 kg</div></div>
+            <div class="card card--tight bg-slate-50"><div class="field-label">Est. transit</div><div class="text-xl font-extrabold text-ink">18–24 d</div></div>
+          </div>
+        </div>
+
+        <div class="card mt-5">
+          <div class="section-head"><span class="ico"><i data-lucide="file-check-2"></i></span><h3>Customs &amp; services</h3></div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <label class="toggle-row is-on"><span class="switch"><input type="checkbox" checked /><span class="track"></span></span>
+              <span><span class="font-semibold text-sm text-ink">US export customs filing</span><span class="block text-xs text-muted mt-0.5">Export declaration &amp; compliance</span></span></label>
+            <label class="toggle-row is-on"><span class="switch"><input type="checkbox" checked /><span class="track"></span></span>
+              <span><span class="font-semibold text-sm text-ink flex items-center gap-1.5">AES / EEI filing <span class="badge badge--atrisk">Required for export</span></span><span class="block text-xs text-muted mt-0.5">Electronic Export Info via AES before departure</span></span></label>
+            <label class="toggle-row"><span class="switch"><input type="checkbox" /><span class="track"></span></span>
+              <span><span class="font-semibold text-sm text-ink">Export license / permit</span><span class="block text-xs text-muted mt-0.5">If commodity is controlled (ECCN / ITAR)</span></span></label>
+            <label class="toggle-row"><span class="switch"><input type="checkbox" /><span class="track"></span></span>
+              <span><span class="font-semibold text-sm text-ink">Cargo insurance</span><span class="block text-xs text-muted mt-0.5">All-risk coverage</span></span></label>
+            <label class="toggle-row"><span class="switch"><input type="checkbox" /><span class="track"></span></span>
+              <span><span class="font-semibold text-sm text-ink">Drayage / inland trucking</span><span class="block text-xs text-muted mt-0.5">Your facility to US port of loading</span></span></label>
+            <label class="toggle-row"><span class="switch"><input type="checkbox" /><span class="track"></span></span>
+              <span><span class="font-semibold text-sm text-ink">Priority / guaranteed sailing</span><span class="block text-xs text-muted mt-0.5">Premium space booking</span></span></label>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== STEP 4 — Parties & Review ===== -->
+      <div class="step-panel hidden" data-step="4">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <div class="card">
+            <div class="section-head"><span class="ico"><i data-lucide="factory"></i></span><h3>Shipper · US exporter</h3></div>
+            <div class="space-y-3">
+              <div><label class="field-label">Company <span class="req">*</span></label><input class="input" value="Acme Exports LLC" /></div>
+              <div><label class="field-label">EIN / IRS no.</label><input class="input" placeholder="12-3456789" /></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="section-head"><span class="ico"><i data-lucide="building-2"></i></span><h3>Consignee · Overseas buyer</h3></div>
+            <div class="space-y-3">
+              <div><label class="field-label">Company <span class="req">*</span></label><input class="input" placeholder="Overseas buyer" /></div>
+              <div><label class="field-label">Country <span class="req">*</span></label><input class="input" placeholder="China" /></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="section-head"><span class="ico"><i data-lucide="bell"></i></span><h3>Notify party</h3></div>
+            <div class="space-y-3">
+              <label class="toggle-row is-on"><span class="switch"><input type="checkbox" checked /><span class="track"></span></span><span class="text-sm font-semibold text-ink">Same as consignee</span></label>
+            </div>
+          </div>
+        </div>
+
+        <div class="card mt-5">
+          <div class="section-head"><span class="ico"><i data-lucide="contact"></i></span><h3>Contact</h3></div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div><label class="field-label">Contact person <span class="req">*</span></label><input class="input" value="Jordan Lee" /></div>
+            <div><label class="field-label">Email <span class="req">*</span></label><input class="input" type="email" value="jordan@acmeexports.com" /></div>
+            <div><label class="field-label">Phone <span class="req">*</span></label>
+              <div class="input-group">
+                <select class="select cc-select" aria-label="Country code" style="width:auto; border-radius:.75rem 0 0 .75rem; border-right:0; background:#f8fafc;">
+                  <option value="+1">+1 · US</option>
+                  <option value="+44">+44 · UK</option>
+                  <option value="+86">+86 · CN</option>
+                  <option value="+49">+49 · DE</option>
+                  <option value="+31">+31 · NL</option>
+                  <option value="+82">+82 · KR</option>
+                  <option value="+65">+65 · SG</option>
+                  <option value="+84">+84 · VN</option>
+                  <option value="+91">+91 · IN</option>
+                  <option value="+971">+971 · AE</option>
+                </select>
+                <input class="input" style="border-radius:0 .75rem .75rem 0; border-left:0;" placeholder="(555) 123-4567" />
+              </div>
+            </div>
+            <div><label class="field-label">Reference / PO #</label><input class="input" placeholder="PO-2026-0042" /></div>
+          </div>
+        </div>
+
+        <!-- Review recap -->
+        <div class="section-accent mt-5 p-5">
+          <div class="section-head"><span class="ico"><i data-lucide="clipboard-check"></i></span><h3>Review your request</h3></div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2 mt-2">
+            <div class="sum-row"><span class="k">Service</span><span class="v" id="rService">Port → Port</span></div>
+            <div class="sum-row"><span class="k">Mode</span><span class="v">FCL · Sea export</span></div>
+            <div class="sum-row"><span class="k">Route</span><span class="v">USLAX → CNSHA</span></div>
+            <div class="sum-row"><span class="k">Incoterm</span><span class="v">FOB</span></div>
+            <div class="sum-row"><span class="k">Containers</span><span class="v" id="rContainers">1× 40'HC, 1× 40'HC</span></div>
+            <div class="sum-row"><span class="k">Total weight</span><span class="v" id="rWeight">36,000 kg</span></div>
+            <div class="sum-row"><span class="k">Customs + AES</span><span class="v">Included</span></div>
+            <div class="sum-row"><span class="k">Cargo ready</span><span class="v">In 2 days</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer nav -->
+      <div class="flex items-center justify-between pt-1">
+        <button class="btn btn-ghost" id="backBtn" disabled><i data-lucide="arrow-left" class="w-4 h-4"></i> Back</button>
+        <div class="flex items-center gap-2">
+          <button class="btn btn-ghost" type="button"><i data-lucide="save" class="w-4 h-4"></i> Save draft</button>
+          <button class="btn btn-primary" id="nextBtn">Continue <i data-lucide="arrow-right" class="w-4 h-4"></i></button>
+          <button class="btn btn-secondary hidden" id="submitBtn"><i data-lucide="send" class="w-4 h-4"></i> Request quote</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- RIGHT: sticky summary -->
+    <aside class="lg:col-span-4">
+      <div class="card sticky-summary">
+        <div class="flex items-center justify-between">
+          <h3 class="font-extrabold text-ink flex items-center gap-2"><i data-lucide="receipt-text" class="w-4 h-4 text-brand"></i> Quote summary</h3>
+          <span class="badge badge--active">Draft</span>
+        </div>
+
+        <div class="mt-3">
+          <div class="sum-row"><span class="k">Service</span><span class="v" id="sService">Port → Port</span></div>
+          <div class="sum-row"><span class="k">Mode</span><span class="v"><span class="chip chip--mode" style="padding:.15rem .5rem"><i data-lucide="ship" class="w-3.5 h-3.5"></i> FCL</span></span></div>
+          <div class="sum-row"><span class="k">Route</span><span class="v">USLAX → CNSHA</span></div>
+          <div class="sum-row"><span class="k">Incoterm</span><span class="v">FOB</span></div>
+        </div>
+
+        <div class="mt-2 pt-2 border-t border-slate-100">
+          <div class="sum-row"><span class="k">Containers</span><span class="v flash" id="sContainers">2</span></div>
+          <div class="sum-row"><span class="k">TEU</span><span class="v flash" id="sTeu">4</span></div>
+          <div class="sum-row"><span class="k">Total weight</span><span class="v flash" id="sWeight">36,000 kg</span></div>
+          <div class="sum-row"><span class="k">Customs / AES</span><span class="v"><i data-lucide="check" class="w-4 h-4 text-ok inline"></i> Included</span></div>
+        </div>
+
+        <div class="mt-3 rounded-control bg-brand-50 border border-[#d8e0f3] p-3">
+          <div class="field-label" style="margin-bottom:.15rem">Estimated rate</div>
+          <div class="text-lg font-extrabold text-brand">On request</div>
+          <p class="text-xs text-muted mt-0.5">We’ll send all-in pricing within 1 business day.</p>
+        </div>
+
+        <button class="btn btn-primary w-full mt-3"><i data-lucide="send" class="w-4 h-4"></i> Request quote</button>
+        <p class="text-[11px] text-center text-muted mt-2 flex items-center justify-center gap-1"><i data-lucide="shield-check" class="w-3.5 h-3.5"></i> No charge to request a quote</p>
+      </div>
+    </aside>
+
+  </div>
+</main>
+
+<script>
+  // ---------- Lucide ----------
+  const refreshIcons = () => window.lucide && lucide.createIcons();
+  refreshIcons();
+
+  // ---------- Container line items ----------
+  const CONTAINER_TYPES = [
+    {v:'20GP', label:"20' Standard", teu:1, tare:2300},
+    {v:'40GP', label:"40' Standard", teu:2, tare:3800},
+    {v:'40HC', label:"40' High Cube", teu:2, tare:3900},
+    {v:'45HC', label:"45' High Cube", teu:2.25, tare:4800},
+    {v:'20RF', label:"20' Reefer", teu:1, tare:3000},
+    {v:'40RF', label:"40' Reefer", teu:2, tare:4600},
+    {v:'20OT', label:"20' Open Top", teu:1, tare:2400},
+    {v:'40FR', label:"40' Flat Rack", teu:2, tare:5000},
+  ];
+  let lines = [
+    {type:'40HC', qty:1, weight:18000, unit:'kg'},
+    {type:'40HC', qty:1, weight:18000, unit:'kg'},
+  ];
+
+  const linesEl = document.getElementById('containerLines');
+  function renderLines(){
+    linesEl.innerHTML = lines.map((l,i)=>{
+      const opts = CONTAINER_TYPES.map(c=>`<option value="${c.v}" ${c.v===l.type?'selected':''}>${c.label}</option>`).join('');
+      return `<div class="cargo-line">
+        <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
+          <div class="sm:col-span-4">
+            <label class="field-label">Container type</label>
+            <select class="select" data-i="${i}" data-f="type">${opts}</select>
+          </div>
+          <div class="sm:col-span-3">
+            <label class="field-label">Quantity</label>
+            <div class="stepper">
+              <button type="button" data-i="${i}" data-step="-1">−</button>
+              <input value="${l.qty}" data-i="${i}" data-f="qty" inputmode="numeric" />
+              <button type="button" data-i="${i}" data-step="1">+</button>
+            </div>
+          </div>
+          <div class="sm:col-span-4">
+            <label class="field-label">Cargo weight / container</label>
+            <div class="input-group">
+              <input class="input" type="number" value="${l.weight}" data-i="${i}" data-f="weight" />
+              <span class="input-addon" style="padding:0">
+                <select class="unit-select" data-i="${i}" data-f="unit" aria-label="Weight unit">
+                  <option value="kg" ${l.unit==='kg'?'selected':''}>KG</option>
+                  <option value="lbs" ${l.unit==='lbs'?'selected':''}>LBS</option>
+                </select>
+              </span>
+            </div>
+          </div>
+          <div class="sm:col-span-1 flex sm:justify-center">
+            <button class="btn btn-ghost btn-sm" title="Remove line" data-i="${i}" data-remove ${lines.length<=1?'disabled':''}><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+    refreshIcons();
+    recompute();
+  }
+
+  function recompute(){
+    let count=0, teu=0, weight=0;
+    lines.forEach(l=>{
+      const t = CONTAINER_TYPES.find(c=>c.v===l.type) || {teu:2};
+      count += Number(l.qty)||0;
+      teu   += (Number(l.qty)||0) * t.teu;
+      const kgPer = (Number(l.weight)||0) * (l.unit==='lbs' ? 0.453592 : 1);
+      weight+= (Number(l.qty)||0) * kgPer;
+    });
+    const wTxt = Math.round(weight).toLocaleString() + ' kg';
+    const summary = describeContainers();
+    setFlash('tCount', count); setFlash('tTeu', teu); setFlash('tWeight', wTxt);
+    setFlash('sContainers', count); setFlash('sTeu', teu); setFlash('sWeight', wTxt);
+    const rc = document.getElementById('rContainers'); if(rc) rc.textContent = summary;
+    const rw = document.getElementById('rWeight'); if(rw) rw.textContent = wTxt;
+  }
+  function describeContainers(){
+    return lines.map(l=>{
+      const t = CONTAINER_TYPES.find(c=>c.v===l.type);
+      const short = t ? t.label.replace("Standard","STD").replace("High Cube","HC").replace("Open Top","OT").replace("Flat Rack","FR").replace("Reefer","RF") : l.type;
+      return `${l.qty}× ${short}`;
+    }).join(', ');
+  }
+  function setFlash(id, val){ const el=document.getElementById(id); if(!el) return; if(el.textContent!=String(val)){ el.textContent=val; el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash'); } }
+
+  linesEl.addEventListener('input', e=>{
+    const i=e.target.dataset.i, f=e.target.dataset.f;
+    if(i!=null && f){ lines[i][f] = f==='qty'?Math.max(1,parseInt(e.target.value)||1):e.target.value; recompute(); }
+  });
+  linesEl.addEventListener('click', e=>{
+    const btn = e.target.closest('button'); if(!btn) return;
+    if(btn.dataset.step){ const i=btn.dataset.i; lines[i].qty=Math.max(1,(Number(lines[i].qty)||1)+Number(btn.dataset.step)); renderLines(); }
+    if(btn.hasAttribute('data-remove')){ const i=+btn.dataset.i; if(lines.length>1){ lines.splice(i,1); renderLines(); } }
+  });
+  document.getElementById('addLine').addEventListener('click', ()=>{ lines.push({type:'40GP',qty:1,weight:15000,unit:'kg'}); renderLines(); });
+  renderLines();
+
+  // ---------- Service type cards → reshape route step ----------
+  const cards = document.getElementById('serviceCards');
+  cards.addEventListener('click', e=>{
+    const card = e.target.closest('.radio-card'); if(!card) return;
+    cards.querySelectorAll('.radio-card').forEach(c=>c.classList.remove('is-on'));
+    card.classList.add('is-on');
+    applyServiceType(card.dataset.origin, card.dataset.dest, card.querySelector('.rc-title').textContent.trim());
+    refreshIcons();
+  });
+  function applyServiceType(origin, dest, title){
+    document.querySelector('.origin-port')?.classList.toggle('hidden', origin!=='port');
+    document.querySelector('.origin-door')?.classList.toggle('hidden', origin!=='door');
+    document.querySelector('.dest-door')?.classList.toggle('hidden', dest!=='door');
+    ['sService','rService'].forEach(id=>{ const el=document.getElementById(id); if(el) el.textContent=title; });
+  }
+
+  // ---------- Conditional toggles (DG, reefer) ----------
+  const bind = (toggleId, fieldsId, rowId) => {
+    const t=document.getElementById(toggleId);
+    t.addEventListener('change', ()=>{
+      document.getElementById(fieldsId).classList.toggle('hidden', !t.checked);
+      document.getElementById(rowId).classList.toggle('is-on', t.checked);
+      refreshIcons();
+    });
+  };
+  bind('dgToggle','dgFields','dgRow');
+  bind('reeferToggle','reeferFields','reeferRow');
+  // auto-suggest reefer when category = perishable
+  document.getElementById('cargoCategory').addEventListener('change', e=>{
+    if(e.target.value==='reefer'){ const r=document.getElementById('reeferToggle'); if(!r.checked){ r.checked=true; r.dispatchEvent(new Event('change')); } }
+  });
+  // toggle-row highlight for all switches
+  document.querySelectorAll('.toggle-row .switch input').forEach(inp=>{
+    inp.addEventListener('change', ()=> inp.closest('.toggle-row').classList.toggle('is-on', inp.checked));
+  });
+
+  // ---------- Wizard navigation ----------
+  let step = 1; const MAX = 4;
+  const panels = [...document.querySelectorAll('.step-panel')];
+  const trackerSteps = [...document.querySelectorAll('#tracker .pr-step')];
+  const trackerLines = [...document.querySelectorAll('#tracker .pr-line')];
+  const backBtn=document.getElementById('backBtn'), nextBtn=document.getElementById('nextBtn'), submitBtn=document.getElementById('submitBtn');
+
+  function go(n){
+    step = Math.min(MAX, Math.max(1, n));
+    panels.forEach(p=> p.classList.toggle('hidden', +p.dataset.step!==step));
+    trackerSteps.forEach(s=>{ const i=+s.dataset.step; s.classList.toggle('is-active', i===step); s.classList.toggle('is-done', i<step); });
+    trackerLines.forEach((l,idx)=> l.classList.toggle('on', idx < step-1));
+    backBtn.disabled = step===1;
+    nextBtn.classList.toggle('hidden', step===MAX);
+    submitBtn.classList.toggle('hidden', step!==MAX);
+    recompute();
+    window.scrollTo({top:0, behavior:'smooth'});
+    refreshIcons();
+  }
+  nextBtn.addEventListener('click', ()=>go(step+1));
+  backBtn.addEventListener('click', ()=>go(step-1));
+  trackerSteps.forEach(s=> s.addEventListener('click', ()=>go(+s.dataset.step)));
+  submitBtn.addEventListener('click', ()=>{ submitBtn.innerHTML='<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Requesting…'; refreshIcons(); setTimeout(()=>{ window.location.href='quote-results.html'; },700); });
+
+  // Any other "Request quote" button (e.g. sticky summary) goes straight to the results page
+  document.querySelectorAll('button').forEach(b=>{ if(b.id!=='submitBtn' && b.textContent.trim().toLowerCase().includes('request quote')) b.addEventListener('click', ()=>{ window.location.href='quote-results.html'; }); });
+
+  // segmented (mode) demo
+  document.querySelectorAll('.segmented button').forEach(b=> b.addEventListener('click', ()=>{
+    b.parentElement.querySelectorAll('button').forEach(x=>{x.classList.remove('active'); x.setAttribute('aria-selected','false');});
+    b.classList.add('active'); b.setAttribute('aria-selected','true');
+  }));
+
+  go(1);
+</script>
+</body>
+</html>

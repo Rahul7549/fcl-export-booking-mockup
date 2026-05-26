@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>FCL Export Booking V2 — Shipment Builder · Cargostar</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = { theme:{ extend:{
+    colors:{ brand:{DEFAULT:'#2A3E8A',50:'#EEF2FA',100:'#E9EDF7',600:'#2A3E8A',700:'#22336f'}, brandgreen:{DEFAULT:'#78B947'}, ok:'#10b981', info:'#3b82f6', warn:'#f59e0b', err:'#ef4444', ink:'#0f172a', muted:'#64748b' },
+    borderRadius:{ card:'1rem', control:'.75rem' },
+    boxShadow:{ card:'0 1px 2px rgba(2,6,23,.06)','card-hover':'0 6px 16px rgba(2,6,23,.08)', pop:'0 8px 24px rgba(2,6,23,.10)' },
+  }}}
+</script>
+<script src="https://unpkg.com/lucide@latest"></script>
+
+<style>
+  :root{
+    --brand:#2A3E8A; --brand-primary:#2A3E8A; --brand-secondary:#78B947;
+    --accent-yellow:#EDDA66; --accent-rose:#f43f5e;
+    --ok:#10b981; --info:#3b82f6; --warn:#f59e0b; --err:#ef4444;
+    --ink:#0f172a; --muted:#64748b; --border:#e2e8f0; --panel:#fff;
+    --brand-50:#EEF2FA; --surface-subtle:#f8fafc; --focus-ring:rgba(42,62,138,.35);
+  }
+  body{ background:#f4f6fb; color:var(--ink); font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; }
+
+  /* ===== shared primitives (same as V1 / live SCSS) ===== */
+  .card{ border-radius:1rem; background:#fff; padding:1.25rem; box-shadow:0 1px 2px rgba(0,0,0,.04); border:1px solid rgba(226,232,240,.7); transition:box-shadow .2s ease, transform .2s ease; }
+  .card:hover{ box-shadow:0 6px 16px rgba(2,6,23,.08); }
+  .card--tight{ padding:1rem; }
+  .btn{ display:inline-flex; align-items:center; justify-content:center; gap:.5rem; border-radius:.75rem; padding:.55rem .9rem; font-size:.875rem; font-weight:600; border:1px solid transparent; background:#fff; color:#334155; transition:filter .15s, background .15s; cursor:pointer; }
+  .btn[disabled]{ opacity:.4; cursor:not-allowed; }
+  .btn-primary{ background:var(--brand-primary); color:#fff; border-color:var(--brand-primary); }
+  .btn-primary:hover{ filter:brightness(.95); }
+  .btn-secondary{ background:var(--brand-secondary); color:#0b1b13; border-color:var(--brand-secondary); }
+  .btn-ghost{ border-color:#e2e8f0; } .btn-ghost:hover{ background:#f8fafc; }
+  .btn-sm{ padding:.4rem .65rem; font-size:.8125rem; border-radius:.625rem; }
+  .btn-soft-primary{ background:rgba(42,62,138,.08); color:var(--brand-primary); border-color:rgba(42,62,138,.15); } .btn-soft-primary:hover{ background:rgba(42,62,138,.12); }
+  .pill{ display:inline-flex; align-items:center; gap:.45rem; border-radius:9999px; padding:.375rem .75rem; border:1px solid #e2e8f0; color:#475569; font-size:.75rem; font-weight:600; background:#fff; cursor:pointer; }
+  .pill--on{ border-color:var(--brand-primary); color:var(--brand-primary); background:#EEF2FA; }
+  .badge{ display:inline-flex; align-items:center; gap:.25rem; border-radius:9999px; padding:.25rem .625rem; font-size:.72rem; font-weight:600; line-height:1; border:1px solid transparent; }
+  .badge--active{ background:#E9EDF7; color:#2A3E8A; border-color:#C9D4EE; }
+  .badge--delivered{ background:#ECF8E8; color:#3F7F22; border-color:#CBEEC0; }
+  .badge--atrisk{ background:#FFFAE6; color:#8F6A00; border-color:#F0E39F; }
+  .chip{ display:inline-flex; align-items:center; gap:.4rem; border-radius:9999px; padding:.3rem .6rem; font-size:.76rem; font-weight:700; border:1px solid transparent; line-height:1; }
+  .chip--mode{ background:#eef2fa; color:var(--brand-primary); border-color:#d8e0f3; }
+
+  /* ===== form primitives ===== */
+  .field-label{ font-size:.7rem; letter-spacing:.05em; text-transform:uppercase; color:#64748b; font-weight:700; display:flex; align-items:center; gap:.35rem; margin-bottom:.35rem; }
+  .field-label .req{ color:var(--err); }
+  .input,.select,textarea.input{ width:100%; border:1px solid var(--border); border-radius:.75rem; padding:.6rem .75rem; font-size:.875rem; color:var(--ink); background:#fff; outline:none; transition:border-color .15s, box-shadow .15s, background .15s; }
+  .input:focus,.select:focus,textarea.input:focus{ border-color:var(--brand-primary); box-shadow:0 0 0 3px var(--focus-ring); }
+  .input::placeholder{ color:#cbd5e1; }
+  .field-hint{ font-size:.72rem; color:#94a3b8; margin-top:.3rem; }
+  .input-group{ display:flex; align-items:stretch; }
+  .input-addon{ display:inline-flex; align-items:center; padding:0 .6rem; border:1px solid var(--border); border-left:0; border-top-right-radius:.75rem; border-bottom-right-radius:.75rem; background:#f8fafc; color:#64748b; font-size:.8rem; font-weight:700; }
+  .unit-select{ border:0; background:transparent; font-weight:800; color:#475569; font-size:.78rem; padding:0 .45rem; height:100%; outline:none; cursor:pointer; }
+  .cc-select{ font-weight:700; color:#475569; }
+  .switch{ position:relative; display:inline-block; width:2.6rem; height:1.5rem; flex:none; }
+  .switch input{ opacity:0; width:0; height:0; }
+  .switch .track{ position:absolute; inset:0; background:#cbd5e1; border-radius:9999px; transition:.2s; }
+  .switch .track::before{ content:""; position:absolute; height:1.1rem; width:1.1rem; left:.2rem; top:.2rem; background:#fff; border-radius:9999px; transition:.2s; box-shadow:0 1px 2px rgba(0,0,0,.2); }
+  .switch input:checked + .track{ background:var(--brand-primary); }
+  .switch input:checked + .track::before{ transform:translateX(1.1rem); }
+  .toggle-tile{ display:flex; align-items:flex-start; gap:.7rem; padding:.8rem; border:1px solid var(--border); border-radius:.875rem; background:#fff; cursor:pointer; transition:.15s; }
+  .toggle-tile.is-on{ border-color:#c9d4ee; background:var(--brand-50); }
+  .stepper{ display:inline-flex; align-items:center; border:1px solid var(--border); border-radius:.75rem; overflow:hidden; }
+  .stepper button{ width:2rem; height:2.25rem; background:#f8fafc; border:0; cursor:pointer; color:#475569; font-weight:700; }
+  .stepper button:hover{ background:#eef2fa; color:var(--brand-primary); }
+  .stepper input{ width:2.75rem; text-align:center; border:0; border-left:1px solid var(--border); border-right:1px solid var(--border); height:2.25rem; font-weight:700; outline:none; }
+
+  /* ===== V2 section card: left accent bar + number badge + collapsible ===== */
+  .sec{ position:relative; border-radius:1rem; background:#fff; border:1px solid rgba(226,232,240,.8); box-shadow:0 1px 2px rgba(0,0,0,.04); overflow:hidden; scroll-margin-top:140px; }
+  .sec::before{ content:""; position:absolute; left:0; top:0; bottom:0; width:4px; background:var(--brand-primary); opacity:.85; }
+  .sec-head{ display:flex; align-items:center; gap:.75rem; padding:1rem 1.25rem; cursor:pointer; }
+  .sec-num{ width:1.9rem; height:1.9rem; border-radius:9999px; background:var(--brand-50); color:var(--brand-primary); display:flex; align-items:center; justify-content:center; font-weight:800; font-size:.85rem; flex:none; border:1px solid #d8e0f3; transition:.2s; }
+  .sec.is-complete .sec-num{ background:var(--ok); color:#fff; border-color:var(--ok); }
+  .sec-title{ font-weight:800; font-size:1.05rem; color:#0f172a; line-height:1.1; }
+  .sec-sub{ font-size:.76rem; color:#94a3b8; margin-top:.1rem; }
+  .sec-body{ padding:0 1.25rem 1.25rem; }
+  .sec.collapsed .sec-body{ display:none; }
+  .sec-caret{ margin-left:auto; color:#94a3b8; transition:transform .2s; }
+  .sec.collapsed .sec-caret{ transform:rotate(-90deg); }
+
+  /* ===== left nav rail ===== */
+  .rail-link{ display:flex; align-items:center; gap:.6rem; padding:.55rem .65rem; border-radius:.7rem; cursor:pointer; color:#64748b; font-weight:600; font-size:.85rem; transition:.15s; position:relative; }
+  .rail-link:hover{ background:#f1f5f9; color:#334155; }
+  .rail-link.active{ background:var(--brand-50); color:var(--brand-primary); }
+  .rail-link.active::before{ content:""; position:absolute; left:-.4rem; top:.4rem; bottom:.4rem; width:3px; border-radius:9999px; background:var(--brand-primary); }
+  .rail-dot{ width:1.4rem; height:1.4rem; border-radius:9999px; border:1.5px solid #cbd5e1; display:flex; align-items:center; justify-content:center; font-size:.7rem; font-weight:800; color:#94a3b8; flex:none; }
+  .rail-link.active .rail-dot{ border-color:var(--brand-primary); color:var(--brand-primary); }
+  .rail-link.done .rail-dot{ background:var(--ok); border-color:var(--ok); color:#fff; }
+
+  /* completeness ring */
+  .progress-ring{ transform:rotate(-90deg); }
+  .progress-ring .bg{ stroke:#e2e8f0; } .progress-ring .fg{ stroke:var(--brand-primary); stroke-linecap:round; transition:stroke-dashoffset .5s ease; }
+
+  /* ===== route builder ===== */
+  .route-builder{ background:linear-gradient(180deg,#fbfdff 0%, #f3f6fc 100%); border:1px solid #e2e8f0; border-radius:1rem; padding:1rem; }
+  .route-node{ flex:1; min-width:0; }
+  .route-connector{ position:relative; height:42px; flex:1 1 80px; min-width:80px; display:flex; align-items:center; }
+  .route-connector .rline{ height:0; border-top:2px dashed #b9c4dd; width:100%; }
+  .route-connector .ship{ position:absolute; top:50%; transform:translate(-50%,-50%); color:var(--brand-primary); animation:sail 4.5s ease-in-out infinite; }
+  @keyframes sail{ 0%{left:6%} 50%{left:94%} 100%{left:6%} }
+  @keyframes sailFlip{ }
+  .endpoint{ display:inline-flex; align-items:center; gap:.4rem; font-weight:800; color:#0f172a; }
+
+  /* ===== preview / container stack ===== */
+  .sticky-aside{ position:sticky; top:1rem; }
+  .cube{ width:1.5rem; height:1.15rem; border-radius:3px; display:inline-block; border:1px solid rgba(0,0,0,.08); box-shadow:inset 0 -3px 0 rgba(0,0,0,.08); }
+  .cube--std{ background:#7c93d8; } .cube--hc{ background:#2A3E8A; } .cube--rf{ background:#38bdf8; } .cube--sp{ background:#f59e0b; }
+  .sum-row{ display:flex; justify-content:space-between; gap:1rem; padding:.4rem 0; border-bottom:1px dashed #eef2f7; font-size:.85rem; }
+  .sum-row:last-child{ border-bottom:0; }
+  .sum-row .k{ color:#64748b; font-weight:600; } .sum-row .v{ color:#0f172a; font-weight:700; text-align:right; }
+
+  /* scrollspy top bar (lg and below) */
+  .spy{ display:flex; gap:.4rem; overflow-x:auto; padding:.5rem; -webkit-overflow-scrolling:touch; }
+  .spy::-webkit-scrollbar{ height:0; }
+
+  /* mobile bottom bar */
+  .mbar{ position:fixed; left:0; right:0; bottom:0; z-index:40; background:#fff; border-top:1px solid #e2e8f0; box-shadow:0 -4px 16px rgba(2,6,23,.06); }
+
+  .tip{ position:relative; } .tip .tip-body{ visibility:hidden; opacity:0; position:absolute; bottom:130%; left:0; width:230px; background:#0f172a; color:#fff; font-size:.72rem; font-weight:500; line-height:1.4; padding:.5rem .6rem; border-radius:.5rem; transition:.15s; z-index:30; } .tip:hover .tip-body{ visibility:visible; opacity:1; }
+  :focus-visible{ outline:2px solid var(--brand-primary); outline-offset:2px; }
+  .flash{ animation:flash .6s ease; } @keyframes flash{0%{background:#fef9c3}100%{background:transparent}}
+  .pop{ animation:pop .25s ease; } @keyframes pop{0%{transform:scale(.6);opacity:0}100%{transform:scale(1);opacity:1}}
+  @media (prefers-reduced-motion: reduce){ .route-connector .ship{ animation:none; left:50% !important; } .pop,.flash{ animation:none; } }
+
+  /* ---- interaction hardening: decorative layers must NEVER intercept clicks ---- */
+  /* icons pass clicks through to their underlying control/button */
+  [data-lucide], svg.lucide, .lucide{ pointer-events:none; }
+  /* purely-visual positioned/animated elements are click-transparent */
+  .route-connector .ship, .route-connector .rline, .cube, .progress-ring,
+  .sec::before, .rail-link.active::before, .switch .track::before, .tip .tip-body{ pointer-events:none; }
+  /* keep form content above section accent bars / decorative layers */
+  .sec-head, .sec-body, .route-builder, .sticky-aside, .card{ position:relative; z-index:1; }
+  /* interactive controls always sit on top and receive pointer events */
+  input, select, textarea, button, label, a, .pill, .toggle-tile, .stepper{ position:relative; z-index:2; pointer-events:auto; }
+</style>
+</head>
+
+<body class="pb-24 xl:pb-6">
+
+<!-- ============ HEADER ============ -->
+<header class="border-b border-slate-200 bg-white/90 backdrop-blur sticky top-0 z-30">
+  <div class="mx-auto max-w-[1400px] px-4 py-3 flex items-center gap-3">
+    <a href="#" class="flex items-center gap-1.5 text-slate-600 font-medium hover:text-slate-900 transition"><i data-lucide="arrow-left" class="w-4 h-4"></i> <span class="hidden sm:inline">Back to Dashboard</span></a>
+    <span class="chip chip--mode ml-1"><i data-lucide="ship" class="w-4 h-4"></i> FCL · Sea</span>
+    <span class="badge badge--active"><i data-lucide="arrow-up" class="w-3.5 h-3.5"></i> Export</span>
+    <div class="ml-auto flex items-center gap-3">
+      <span class="hidden sm:inline-flex items-center gap-1.5 text-xs text-muted"><i data-lucide="cloud-check" class="w-4 h-4 text-ok"></i> Draft saved <span id="savedAgo">just now</span></span>
+      <span class="badge badge--active px-2 py-1 text-[10px] font-bold uppercase tracking-wide">V2 · Builder</span>
+    </div>
+  </div>
+</header>
+
+<div class="mx-auto max-w-[1400px] px-4 py-5">
+  <!-- title -->
+  <div class="mb-4">
+    <h1 class="text-2xl font-extrabold text-ink">Request an FCL Export Quote</h1>
+    <p class="text-sm text-muted mt-1">Outbound from the USA — build your shipment below, we’ll respond within 1 business day.</p>
+  </div>
+
+  <div class="grid grid-cols-12 gap-5">
+
+    <!-- ============ LEFT NAV RAIL (xl+) ============ -->
+    <aside class="hidden xl:block xl:col-span-2">
+      <div class="sticky-aside space-y-4">
+        <div class="card card--tight">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="relative" style="width:54px;height:54px">
+              <svg width="54" height="54" class="progress-ring" viewBox="0 0 54 54">
+                <circle class="bg" cx="27" cy="27" r="23" fill="none" stroke-width="6"></circle>
+                <circle id="ringFg" class="fg" cx="27" cy="27" r="23" fill="none" stroke-width="6" stroke-dasharray="144.5" stroke-dashoffset="144.5"></circle>
+              </svg>
+              <span id="ringPct" class="absolute inset-0 flex items-center justify-center text-xs font-extrabold text-brand">0%</span>
+            </div>
+            <div>
+              <div class="text-sm font-extrabold text-ink leading-tight">Almost there</div>
+              <div class="text-[11px] text-muted">Complete all sections</div>
+            </div>
+          </div>
+          <nav id="rail" class="space-y-1">
+            <a class="rail-link" data-target="sec-route"><span class="rail-dot">1</span> Route &amp; service</a>
+            <a class="rail-link" data-target="sec-cargo"><span class="rail-dot">2</span> Cargo &amp; containers</a>
+            <a class="rail-link" data-target="sec-customs"><span class="rail-dot">3</span> Customs &amp; services</a>
+            <a class="rail-link" data-target="sec-parties"><span class="rail-dot">4</span> Parties &amp; contact</a>
+          </nav>
+        </div>
+        <button class="btn btn-primary w-full"><i data-lucide="send" class="w-4 h-4"></i> Request quote</button>
+        <p class="text-[11px] text-center text-muted flex items-center justify-center gap-1"><i data-lucide="shield-check" class="w-3.5 h-3.5"></i> Free to request</p>
+      </div>
+    </aside>
+
+    <!-- ============ MAIN CANVAS ============ -->
+    <main class="col-span-12 lg:col-span-8 xl:col-span-7 space-y-5">
+
+      <!-- scrollspy bar (below xl) -->
+      <div class="card card--tight xl:hidden sticky top-[64px] z-20 !p-1">
+        <div class="spy" id="spy">
+          <span class="pill" data-target="sec-route">1 · Route</span>
+          <span class="pill" data-target="sec-cargo">2 · Cargo</span>
+          <span class="pill" data-target="sec-customs">3 · Customs</span>
+          <span class="pill" data-target="sec-parties">4 · Parties</span>
+        </div>
+      </div>
+
+      <!-- ===== SECTION 1 — Route & service ===== -->
+      <section class="sec" id="sec-route">
+        <div class="sec-head" data-collapse>
+          <span class="sec-num">1</span>
+          <div><div class="sec-title">Route &amp; service</div><div class="sec-sub">Where it sails from and to, and how far we handle it</div></div>
+          <i data-lucide="chevron-down" class="sec-caret w-5 h-5"></i>
+        </div>
+        <div class="sec-body">
+
+          <!-- visual route builder -->
+          <div class="route-builder">
+            <div class="flex items-center gap-3">
+              <div class="route-node">
+                <div class="field-label"><i data-lucide="anchor" class="w-3.5 h-3.5"></i> Origin · United States</div>
+                <div class="origin-port">
+                  <select class="select" id="polSel" data-req data-sec="route"><option>USLAX · Los Angeles, CA</option><option>USLGB · Long Beach, CA</option><option>USNYC · New York / Newark, NJ</option><option>USSAV · Savannah, GA</option><option>USHOU · Houston, TX</option><option>USSEA · Seattle, WA</option><option>USORF · Norfolk, VA</option><option>USCHS · Charleston, SC</option></select>
+                </div>
+                <div class="origin-door hidden">
+                  <select class="select" id="polZip"><option value="">Pickup ZIP…</option><option>90021 · Los Angeles, CA</option><option>11430 · JFK, NY</option><option>07114 · Newark, NJ</option><option>30354 · Atlanta, GA</option><option>77032 · Houston, TX</option><option>98168 · Seattle, WA</option><option>60638 · Chicago, IL</option></select>
+                </div>
+              </div>
+
+              <div class="route-connector" title="Ocean freight">
+                <div class="rline"></div>
+                <span class="ship"><i data-lucide="ship" class="w-5 h-5"></i></span>
+              </div>
+
+              <div class="route-node text-right">
+                <div class="field-label justify-end"><i data-lucide="map-pin" class="w-3.5 h-3.5"></i> Destination · Overseas</div>
+                <select class="select" id="podSel" data-req data-sec="route"><option>CNSHA · Shanghai, China</option><option>CNNGB · Ningbo, China</option><option>KRPUS · Busan, South Korea</option><option>SGSIN · Singapore</option><option>VNSGN · Ho Chi Minh, Vietnam</option><option>NLRTM · Rotterdam, Netherlands</option><option>DEHAM · Hamburg, Germany</option><option>INNSA · Nhava Sheva, India</option></select>
+              </div>
+            </div>
+
+            <!-- service chips -->
+            <div class="flex flex-wrap items-center gap-2 mt-4">
+              <span class="text-[11px] uppercase tracking-wide font-bold text-slate-500 mr-1">Service</span>
+              <span class="pill" data-service data-origin="port" data-dest="port"><i data-lucide="anchor" class="w-3.5 h-3.5"></i> Port → Port</span>
+              <span class="pill" data-service data-origin="port" data-dest="door"><i data-lucide="anchor" class="w-3.5 h-3.5"></i> Port → Door</span>
+              <span class="pill" data-service data-origin="door" data-dest="door"><i data-lucide="warehouse" class="w-3.5 h-3.5"></i> Door → Door</span>
+              <span class="pill" data-service data-origin="door" data-dest="port"><i data-lucide="warehouse" class="w-3.5 h-3.5"></i> Door → Port</span>
+            </div>
+          </div>
+
+          <!-- overseas delivery address (door dest) -->
+          <div class="dest-door hidden mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="sm:col-span-2"><label class="field-label">Overseas delivery address <span class="req">*</span></label><input class="input" placeholder="Street, building, unit" /></div>
+            <div><label class="field-label">City <span class="req">*</span></label><input class="input" placeholder="Shanghai" /></div>
+            <div><label class="field-label">Country <span class="req">*</span></label><input class="input" placeholder="China" /></div>
+          </div>
+
+          <!-- schedule + incoterm -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
+            <div>
+              <label class="field-label">Cargo ready date <span class="req">*</span></label>
+              <div class="flex items-center gap-2"><input class="input" type="date" data-req data-sec="route" /><button class="pill" type="button">ASAP</button></div>
+            </div>
+            <div>
+              <label class="field-label">Incoterms <span class="req">*</span>
+                <span class="tip"><i data-lucide="info" class="w-3.5 h-3.5 text-slate-400"></i><span class="tip-body">FOB, EXW &amp; CIF are most common for US ocean exports.</span></span>
+              </label>
+              <select class="select"><option>FOB — Free On Board</option><option>EXW — Ex Works</option><option>CIF — Cost, Insurance &amp; Freight</option><option>CFR — Cost &amp; Freight</option><option>FCA — Free Carrier</option><option>DAP — Delivered At Place</option><option>DDP — Delivered Duty Paid</option></select>
+            </div>
+            <div><label class="field-label">Target delivery date</label><input class="input" type="date" /></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== SECTION 2 — Cargo & containers ===== -->
+      <section class="sec" id="sec-cargo">
+        <div class="sec-head" data-collapse>
+          <span class="sec-num">2</span>
+          <div><div class="sec-title">Cargo &amp; containers</div><div class="sec-sub">Commodity, handling and container mix</div></div>
+          <i data-lucide="chevron-down" class="sec-caret w-5 h-5"></i>
+        </div>
+        <div class="sec-body">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="field-label">Commodity <span class="req">*</span></label>
+              <input class="input" placeholder="e.g. Furniture" data-req data-sec="cargo" />
+              <!-- HS code removed per request -->
+            </div>
+            <div>
+              <label class="field-label">Cargo category <span class="req">*</span></label>
+              <select class="select" id="cargoCategory" data-req data-sec="cargo"><option value="general">General cargo</option><option value="reefer">Perishable / Reefer</option><option value="hazmat">Hazardous (IMO)</option><option value="oog">Oversized / OOG</option><option value="highvalue">High value</option></select>
+            </div>
+          </div>
+
+          <!-- Declared cargo value — commented out per request
+          <div><label class="field-label">Declared cargo value</label><div class="input-group"><input class="input" type="number" placeholder="0.00" /><span class="input-addon">USD</span></div></div>
+          -->
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
+            <label class="toggle-tile" id="dgRow"><span class="switch"><input type="checkbox" id="dgToggle" /><span class="track"></span></span>
+              <span><span class="font-semibold text-sm text-ink flex items-center gap-1.5"><i data-lucide="flame" class="w-4 h-4 text-err"></i> Dangerous goods (IMDG)</span><span class="block text-xs text-muted mt-0.5">Hazardous / regulated cargo</span></span></label>
+            <label class="toggle-tile" id="reeferRow"><span class="switch"><input type="checkbox" id="reeferToggle" /><span class="track"></span></span>
+              <span><span class="font-semibold text-sm text-ink flex items-center gap-1.5"><i data-lucide="snowflake" class="w-4 h-4 text-info"></i> Temperature-controlled</span><span class="block text-xs text-muted mt-0.5">Reefer container required</span></span></label>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-3 hidden" id="dgFields">
+            <div><label class="field-label">UN number <span class="req">*</span></label><input class="input" placeholder="e.g. UN1263" /></div>
+            <div><label class="field-label">IMO class <span class="req">*</span></label><select class="select"><option>Class 3 — Flammable liquids</option><option>Class 8 — Corrosives</option><option>Class 9 — Miscellaneous</option></select></div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-3 hidden" id="reeferFields">
+            <div><label class="field-label">Set temperature</label><div class="input-group"><input class="input" type="number" placeholder="-18" /><span class="input-addon">°C</span></div></div>
+            <div><label class="field-label">Ventilation / humidity</label><input class="input" placeholder="e.g. 25 CBM/h, 65% RH" /></div>
+          </div>
+
+          <!-- containers -->
+          <div class="flex items-center justify-between mt-5 mb-2">
+            <div class="field-label !mb-0"><i data-lucide="container" class="w-3.5 h-3.5"></i> Container mix</div>
+            <button class="btn btn-soft-primary btn-sm" id="addLine" type="button"><i data-lucide="plus" class="w-4 h-4"></i> Add line</button>
+          </div>
+          <div id="containerLines" class="space-y-3"></div>
+        </div>
+      </section>
+
+      <!-- ===== SECTION 3 — Customs & services ===== -->
+      <section class="sec" id="sec-customs">
+        <div class="sec-head" data-collapse>
+          <span class="sec-num">3</span>
+          <div><div class="sec-title">Customs &amp; services</div><div class="sec-sub">Export compliance and value-adds</div></div>
+          <i data-lucide="chevron-down" class="sec-caret w-5 h-5"></i>
+        </div>
+        <div class="sec-body grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <label class="toggle-tile is-on"><span class="switch"><input type="checkbox" checked /><span class="track"></span></span>
+            <span><span class="font-semibold text-sm text-ink">US export customs filing</span><span class="block text-xs text-muted mt-0.5">Export declaration &amp; compliance</span></span></label>
+          <label class="toggle-tile is-on"><span class="switch"><input type="checkbox" checked /><span class="track"></span></span>
+            <span><span class="font-semibold text-sm text-ink flex items-center gap-1.5">AES / EEI filing <span class="badge badge--atrisk">Required</span></span><span class="block text-xs text-muted mt-0.5">Electronic Export Info via AES before departure</span></span></label>
+          <label class="toggle-tile"><span class="switch"><input type="checkbox" /><span class="track"></span></span>
+            <span><span class="font-semibold text-sm text-ink">Export license / permit</span><span class="block text-xs text-muted mt-0.5">If controlled (ECCN / ITAR)</span></span></label>
+          <label class="toggle-tile"><span class="switch"><input type="checkbox" /><span class="track"></span></span>
+            <span><span class="font-semibold text-sm text-ink">Cargo insurance</span><span class="block text-xs text-muted mt-0.5">All-risk coverage</span></span></label>
+          <label class="toggle-tile"><span class="switch"><input type="checkbox" /><span class="track"></span></span>
+            <span><span class="font-semibold text-sm text-ink">Drayage / inland trucking</span><span class="block text-xs text-muted mt-0.5">Your facility → US port of loading</span></span></label>
+          <label class="toggle-tile"><span class="switch"><input type="checkbox" /><span class="track"></span></span>
+            <span><span class="font-semibold text-sm text-ink">Priority / guaranteed sailing</span><span class="block text-xs text-muted mt-0.5">Premium space booking</span></span></label>
+        </div>
+      
+      
+        
+      </section>
+
+
+
+      <!-- ===== SECTION 4 — Parties & contact ===== -->
+      <section class="sec" id="sec-parties">
+        <div class="sec-head" data-collapse>
+          <span class="sec-num">4</span>
+          <div><div class="sec-title">Parties &amp; contact</div><div class="sec-sub">Shipper, consignee and who we reach for the quote</div></div>
+          <i data-lucide="chevron-down" class="sec-caret w-5 h-5"></i>
+        </div>
+        <div class="sec-body">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="rounded-control border border-slate-200 p-3">
+              <div class="field-label"><i data-lucide="factory" class="w-3.5 h-3.5"></i> Shipper · US exporter</div>
+              <input class="input mb-2" value="Acme Exports LLC" data-req data-sec="parties" />
+              <input class="input" placeholder="EIN / IRS no." />
+            </div>
+            <div class="rounded-control border border-slate-200 p-3">
+              <div class="field-label"><i data-lucide="building-2" class="w-3.5 h-3.5"></i> Consignee · Overseas buyer</div>
+              <input class="input mb-2" placeholder="Company" data-req data-sec="parties" />
+              <input class="input" placeholder="Country" />
+            </div>
+            <div class="rounded-control border border-slate-200 p-3">
+              <div class="field-label"><i data-lucide="bell" class="w-3.5 h-3.5"></i> Notify party</div>
+              <label class="toggle-tile is-on !p-2"><span class="switch"><input type="checkbox" checked /><span class="track"></span></span><span class="text-sm font-semibold text-ink">Same as consignee</span></label>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+            <div><label class="field-label">Contact person <span class="req">*</span></label><input class="input" value="Jordan Lee" data-req data-sec="parties" /></div>
+            <div><label class="field-label">Email <span class="req">*</span></label><input class="input" type="email" value="jordan@acmeexports.com" data-req data-sec="parties" /></div>
+            <div><label class="field-label">Phone <span class="req">*</span></label>
+              <div class="input-group">
+                <select class="select cc-select" aria-label="Country code" style="width:auto; border-radius:.75rem 0 0 .75rem; border-right:0; background:#f8fafc;">
+                  <option value="+1">+1 · US</option><option value="+44">+44 · UK</option><option value="+86">+86 · CN</option><option value="+49">+49 · DE</option><option value="+31">+31 · NL</option><option value="+82">+82 · KR</option><option value="+65">+65 · SG</option><option value="+84">+84 · VN</option><option value="+91">+91 · IN</option><option value="+971">+971 · AE</option>
+                </select>
+                <input class="input" style="border-radius:0 .75rem .75rem 0; border-left:0;" placeholder="(555) 123-4567" data-req data-sec="parties" />
+              </div>
+            </div>
+            <div><label class="field-label">Reference / PO #</label><input class="input" placeholder="PO-2026-0042" /></div>
+          </div>
+        </div>
+      </section>
+
+
+      <div class="flex items-center justify-between pt-1">
+        <button class="btn btn-ghost" id="backBtn" disabled><i data-lucide="arrow-left" class="w-4 h-4"></i> Back</button>
+        <div class="flex items-center gap-2">
+          <button class="btn btn-ghost" type="button"><i data-lucide="save" class="w-4 h-4"></i> Save draft</button>
+          <button class="btn btn-primary" id="nextBtn">Continue <i data-lucide="arrow-right" class="w-4 h-4"></i></button>
+          <button class="btn btn-secondary hidden" id="submitBtn"><i data-lucide="send" class="w-4 h-4"></i> Request quote</button>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- ============ RIGHT: SHIPMENT PREVIEW ============ -->
+    <aside class="col-span-12 lg:col-span-4 xl:col-span-3">
+      <div class="sticky-aside space-y-4">
+        <div class="card">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="font-extrabold text-ink flex items-center gap-2"><i data-lucide="box" class="w-4 h-4 text-brand"></i> Shipment preview</h3>
+            <span class="badge badge--active">Live</span>
+          </div>
+
+          <!-- route visual -->
+          <div class="rounded-control bg-brand-50 border border-[#d8e0f3] p-3">
+            <div class="flex items-center justify-between text-xs font-extrabold text-brand">
+              <span id="pvPol">USLAX</span>
+              <span class="flex-1 mx-2 border-t-2 border-dashed border-[#b9c4dd] relative"><i data-lucide="ship" class="w-3.5 h-3.5 absolute -top-2 left-1/2 -translate-x-1/2 bg-brand-50 px-0.5"></i></span>
+              <span id="pvPod">CNSHA</span>
+            </div>
+            <div class="text-[11px] text-muted text-center mt-1" id="pvService">Port → Port · ~18–24 days</div>
+          </div>
+
+          <!-- container stack -->
+          <div class="mt-3">
+            <div class="field-label">Container mix</div>
+            <div id="stack" class="flex flex-wrap gap-1 items-end min-h-[28px]"></div>
+          </div>
+
+          <div class="mt-3">
+            <div class="sum-row"><span class="k">Containers</span><span class="v flash" id="pvCount">2</span></div>
+            <div class="sum-row"><span class="k">TEU</span><span class="v flash" id="pvTeu">4</span></div>
+            <div class="sum-row"><span class="k">Gross weight</span><span class="v flash" id="pvWeight">36,000 kg</span></div>
+            <div class="sum-row"><span class="k">Customs / AES</span><span class="v"><i data-lucide="check" class="w-4 h-4 text-ok inline"></i> Included</span></div>
+          </div>
+
+          <div class="mt-3 rounded-control bg-slate-50 border border-slate-200 p-3 text-center">
+            <div class="field-label justify-center" style="margin-bottom:.1rem">Estimated all-in rate</div>
+            <div class="text-lg font-extrabold text-brand">On request</div>
+            <p class="text-[11px] text-muted">Sent within 1 business day</p>
+          </div>
+        </div>
+
+        <button class="btn btn-primary w-full hidden xl:flex"><i data-lucide="send" class="w-4 h-4"></i> Request quote</button>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<!-- mobile sticky action bar -->
+<div class="mbar xl:hidden">
+  <div class="mx-auto max-w-[1400px] px-4 py-2.5 flex items-center gap-3">
+    <div class="leading-tight">
+      <div class="text-[11px] text-muted">2 cont · <span id="mWeight">36,000 kg</span></div>
+      <div class="text-xs font-extrabold text-brand">Est. rate: on request</div>
+    </div>
+    <button class="btn btn-primary ml-auto"><i data-lucide="send" class="w-4 h-4"></i> Request quote</button>
+  </div>
+</div>
+
+<script>
+  const refresh = () => window.lucide && lucide.createIcons();
+  refresh();
+
+  /* ---------- containers ---------- */
+  const TYPES=[{v:'20GP',label:"20' Standard",teu:1,c:'std'},{v:'40GP',label:"40' Standard",teu:2,c:'std'},{v:'40HC',label:"40' High Cube",teu:2,c:'hc'},{v:'45HC',label:"45' High Cube",teu:2.25,c:'hc'},{v:'20RF',label:"20' Reefer",teu:1,c:'rf'},{v:'40RF',label:"40' Reefer",teu:2,c:'rf'},{v:'20OT',label:"20' Open Top",teu:1,c:'sp'},{v:'40FR',label:"40' Flat Rack",teu:2,c:'sp'}];
+  let lines=[{type:'40HC',qty:1,weight:18000,unit:'kg'},{type:'40HC',qty:1,weight:18000,unit:'kg'}];
+  const linesEl=document.getElementById('containerLines');
+  function renderLines(){
+    linesEl.innerHTML=lines.map((l,i)=>{
+      const opts=TYPES.map(c=>`<option value="${c.v}" ${c.v===l.type?'selected':''}>${c.label}</option>`).join('');
+      return `<div class="rounded-control border border-slate-200 p-3 bg-[#fbfdff]">
+        <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
+          <div class="sm:col-span-5"><label class="field-label">Container type</label><select class="select" data-i="${i}" data-f="type">${opts}</select></div>
+          <div class="sm:col-span-3"><label class="field-label">Qty</label><div class="stepper"><button type="button" data-i="${i}" data-step="-1">−</button><input value="${l.qty}" data-i="${i}" data-f="qty" inputmode="numeric"/><button type="button" data-i="${i}" data-step="1">+</button></div></div>
+          <div class="sm:col-span-3"><label class="field-label">Weight / cont.</label><div class="input-group"><input class="input" type="number" value="${l.weight}" data-i="${i}" data-f="weight"/><span class="input-addon" style="padding:0"><select class="unit-select" data-i="${i}" data-f="unit" aria-label="Weight unit"><option value="kg" ${l.unit==='kg'?'selected':''}>KG</option><option value="lbs" ${l.unit==='lbs'?'selected':''}>LBS</option></select></span></div></div>
+          <div class="sm:col-span-1 flex sm:justify-center"><button class="btn btn-ghost btn-sm" data-i="${i}" data-remove ${lines.length<=1?'disabled':''} title="Remove"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div>
+        </div></div>`;
+    }).join('');
+    refresh(); recompute();
+  }
+  function recompute(){
+    let count=0,teu=0,weight=0;
+    lines.forEach(l=>{const t=TYPES.find(c=>c.v===l.type)||{teu:2}; count+=+l.qty||0; teu+=(+l.qty||0)*t.teu; weight+=(+l.qty||0)*((+l.weight||0)*(l.unit==='lbs'?0.453592:1));});
+    const w=Math.round(weight).toLocaleString()+' kg';
+    set('pvCount',count); set('pvTeu',teu); set('pvWeight',w);
+    const mw=document.getElementById('mWeight'); if(mw) mw.textContent=w;
+    // stack viz
+    const stack=document.getElementById('stack'); let blocks=[]; lines.forEach(l=>{const t=TYPES.find(c=>c.v===l.type)||{c:'std'}; for(let k=0;k<(+l.qty||0);k++) blocks.push(t.c);});
+    const shown=blocks.slice(0,10);
+    stack.innerHTML=shown.map(c=>`<span class="cube cube--${c} pop"></span>`).join('')+(blocks.length>10?`<span class="text-xs font-bold text-muted ml-1">+${blocks.length-10}</span>`:'');
+    updateProgress();
+  }
+  function set(id,val){const el=document.getElementById(id); if(el&&el.textContent!=String(val)){el.textContent=val; el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash');}}
+  linesEl.addEventListener('input',e=>{const i=e.target.dataset.i,f=e.target.dataset.f; if(i!=null&&f){lines[i][f]=f==='qty'?Math.max(1,parseInt(e.target.value)||1):e.target.value; recompute();}});
+  linesEl.addEventListener('click',e=>{const b=e.target.closest('button'); if(!b)return; if(b.dataset.step){lines[b.dataset.i].qty=Math.max(1,(+lines[b.dataset.i].qty||1)+ +b.dataset.step); renderLines();} if(b.hasAttribute('data-remove')){const i=+b.dataset.i; if(lines.length>1){lines.splice(i,1); renderLines();}}});
+  document.getElementById('addLine').addEventListener('click',()=>{lines.push({type:'40GP',qty:1,weight:15000,unit:'kg'}); renderLines();});
+  renderLines();
+
+  /* ---------- service chips → reshape route + preview ---------- */
+  const chips=[...document.querySelectorAll('[data-service]')];
+  chips[0].classList.add('pill--on');
+  chips.forEach(ch=>ch.addEventListener('click',()=>{
+    chips.forEach(c=>c.classList.remove('pill--on')); ch.classList.add('pill--on');
+    const o=ch.dataset.origin,d=ch.dataset.dest;
+    document.querySelector('.origin-port').classList.toggle('hidden',o!=='port');
+    document.querySelector('.origin-door').classList.toggle('hidden',o!=='door');
+    document.querySelector('.dest-door').classList.toggle('hidden',d!=='door');
+    document.getElementById('pvService').textContent=ch.textContent.trim()+' · ~18–24 days';
+    refresh(); updateProgress();
+  }));
+
+  /* ---------- route labels in preview ---------- */
+  const code=s=>s.split(' · ')[0].trim();
+  document.getElementById('polSel').addEventListener('change',e=>document.getElementById('pvPol').textContent=code(e.target.value));
+  document.getElementById('podSel').addEventListener('change',e=>document.getElementById('pvPod').textContent=code(e.target.value));
+
+  /* ---------- conditional fields ---------- */
+  const bind=(t,f,r)=>{const el=document.getElementById(t); el.addEventListener('change',()=>{document.getElementById(f).classList.toggle('hidden',!el.checked); document.getElementById(r).classList.toggle('is-on',el.checked); refresh();});};
+  bind('dgToggle','dgFields','dgRow'); bind('reeferToggle','reeferFields','reeferRow');
+  document.getElementById('cargoCategory').addEventListener('change',e=>{if(e.target.value==='reefer'){const r=document.getElementById('reeferToggle'); if(!r.checked){r.checked=true; r.dispatchEvent(new Event('change'));}}});
+  document.querySelectorAll('.toggle-tile .switch input').forEach(i=>i.addEventListener('change',()=>i.closest('.toggle-tile').classList.toggle('is-on',i.checked)));
+
+  /* ---------- collapsible sections ---------- */
+  document.querySelectorAll('[data-collapse]').forEach(h=>h.addEventListener('click',e=>{ if(e.target.closest('input,select,button,a')) return; h.closest('.sec').classList.toggle('collapsed'); refresh(); }));
+
+  /* ---------- completeness ring + rail state ---------- */
+  const R=23, C=2*Math.PI*R;
+  document.getElementById('ringFg').setAttribute('stroke-dasharray',C.toFixed(1));
+  function sectionFilled(sec){ const els=[...document.querySelectorAll(`[data-req][data-sec="${sec}"]`)]; return els.length>0 && els.every(el=>String(el.value||'').trim()!==''); }
+  function updateProgress(){
+    const secs=['route','cargo','customs','parties'];
+    let done=0;
+    secs.forEach(s=>{
+      const complete = s==='customs' ? true : sectionFilled(s); // customs has no required text inputs
+      if(complete) done++;
+      document.querySelectorAll(`[data-target="sec-${s}"]`).forEach(l=>l.classList.toggle('done',complete));
+      const el=document.getElementById('sec-'+s); if(el) el.classList.toggle('is-complete',complete);
+    });
+    const pct=Math.round(done/secs.length*100);
+    document.getElementById('ringFg').setAttribute('stroke-dashoffset',(1));
+    document.getElementById('ringPct').textContent=pct+'%';
+  }
+  document.querySelectorAll('[data-req]').forEach(el=>el.addEventListener('input',updateProgress));
+
+  /* ---------- scrollspy + smooth scroll ---------- */
+  const targets=['sec-route','sec-cargo','sec-customs','sec-parties'].map(id=>document.getElementById(id));
+  const links=[...document.querySelectorAll('[data-target]')];
+  function activate(id){ links.forEach(l=>l.classList.toggle('active',l.dataset.target===id)); }
+  const io=new IntersectionObserver((ents)=>{ ents.forEach(en=>{ if(en.isIntersecting) activate(en.target.id); }); },{rootMargin:'-45% 0px -50% 0px'});
+  targets.forEach(t=>io.observe(t));
+  links.forEach(l=>l.addEventListener('click',()=>{ const el=document.getElementById(l.dataset.target); el.classList.remove('collapsed'); window.scrollTo({top:el.getBoundingClientRect().top+window.scrollY-130,behavior:'smooth'}); }));
+
+  /* ---------- saved timestamp ---------- */
+  let t=0; setInterval(()=>{t+=15; const el=document.getElementById('savedAgo'); if(el) el.textContent=t<60?t+'s ago':Math.floor(t/60)+'m ago';},15000);
+
+  /* navigate to the results page on any "Request quote" button */
+  document.querySelectorAll('button').forEach(b=>{ if(b.textContent.trim().toLowerCase().includes('request quote')) b.addEventListener('click', ()=>{ window.location.href='quote-results.html'; }); });
+
+  updateProgress();
+</script>
+</body>
+</html>

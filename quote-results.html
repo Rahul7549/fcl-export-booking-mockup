@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Quote Results — Compare Shipping Options · Cargostar</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = { theme:{ extend:{
+    colors:{ brand:{DEFAULT:'#2A3E8A',50:'#EEF2FA',100:'#E9EDF7',600:'#2A3E8A',700:'#22336f'}, brandgreen:{DEFAULT:'#78B947'}, ok:'#10b981', info:'#3b82f6', warn:'#f59e0b', err:'#ef4444', ink:'#0f172a', muted:'#64748b' },
+    borderRadius:{ card:'1rem', control:'.75rem' },
+    boxShadow:{ card:'0 1px 2px rgba(2,6,23,.06)','card-hover':'0 6px 16px rgba(2,6,23,.08)', pop:'0 8px 24px rgba(2,6,23,.10)' },
+  }}}
+</script>
+<script src="https://unpkg.com/lucide@latest"></script>
+
+<style>
+  :root{
+    --brand:#2A3E8A; --brand-primary:#2A3E8A; --brand-secondary:#78B947;
+    --accent-yellow:#EDDA66; --accent-rose:#f43f5e;
+    --ok:#10b981; --info:#3b82f6; --warn:#f59e0b; --err:#ef4444;
+    --ink:#0f172a; --muted:#64748b; --border:#e2e8f0; --panel:#fff;
+    --brand-50:#EEF2FA; --surface-subtle:#f8fafc; --focus-ring:rgba(42,62,138,.35);
+  }
+  body{ background:#f4f6fb; color:var(--ink); font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; }
+
+  /* ===== shared primitives (same system as the booking mockups) ===== */
+  .card{ border-radius:1rem; background:#fff; padding:1.25rem; box-shadow:0 1px 2px rgba(0,0,0,.04); border:1px solid rgba(226,232,240,.7); transition:box-shadow .2s ease, transform .15s ease; }
+  .card--tight{ padding:1rem; }
+  .btn{ display:inline-flex; align-items:center; justify-content:center; gap:.5rem; border-radius:.75rem; padding:.55rem .9rem; font-size:.875rem; font-weight:600; border:1px solid transparent; background:#fff; color:#334155; transition:filter .15s, background .15s; cursor:pointer; }
+  .btn[disabled]{ opacity:.4; cursor:not-allowed; }
+  .btn-primary{ background:var(--brand-primary); color:#fff; border-color:var(--brand-primary); } .btn-primary:hover{ filter:brightness(.95); }
+  .btn-secondary{ background:var(--brand-secondary); color:#0b1b13; border-color:var(--brand-secondary); }
+  .btn-ghost{ border-color:#e2e8f0; } .btn-ghost:hover{ background:#f8fafc; }
+  .btn-sm{ padding:.4rem .65rem; font-size:.8125rem; border-radius:.625rem; }
+  .btn-soft-primary{ background:rgba(42,62,138,.08); color:var(--brand-primary); border-color:rgba(42,62,138,.15); } .btn-soft-primary:hover{ background:rgba(42,62,138,.12); }
+  .pill{ display:inline-flex; align-items:center; gap:.4rem; border-radius:9999px; padding:.375rem .75rem; border:1px solid #e2e8f0; color:#475569; font-size:.75rem; font-weight:600; background:#fff; cursor:pointer; }
+  .pill--on{ border-color:var(--brand-primary); color:var(--brand-primary); background:#EEF2FA; }
+  .badge{ display:inline-flex; align-items:center; gap:.25rem; border-radius:9999px; padding:.25rem .55rem; font-size:.7rem; font-weight:700; line-height:1; border:1px solid transparent; }
+  .badge--active{ background:#E9EDF7; color:#2A3E8A; border-color:#C9D4EE; }
+  .badge--delivered{ background:#ECF8E8; color:#3F7F22; border-color:#CBEEC0; }
+  .badge--atrisk{ background:#FFFAE6; color:#8F6A00; border-color:#F0E39F; }
+  .chip{ display:inline-flex; align-items:center; gap:.4rem; border-radius:9999px; padding:.3rem .6rem; font-size:.74rem; font-weight:700; border:1px solid transparent; line-height:1; }
+  .chip--mode{ background:#eef2fa; color:var(--brand-primary); border-color:#d8e0f3; }
+  .field-label{ font-size:.7rem; letter-spacing:.05em; text-transform:uppercase; color:#64748b; font-weight:700; }
+  .switch{ position:relative; display:inline-block; width:2.4rem; height:1.4rem; flex:none; }
+  .switch input{ opacity:0; width:0; height:0; }
+  .switch .track{ position:absolute; inset:0; background:#cbd5e1; border-radius:9999px; transition:.2s; }
+  .switch .track::before{ content:""; position:absolute; height:1rem; width:1rem; left:.2rem; top:.2rem; background:#fff; border-radius:9999px; transition:.2s; box-shadow:0 1px 2px rgba(0,0,0,.2); }
+  .switch input:checked + .track{ background:var(--brand-primary); }
+  .switch input:checked + .track::before{ transform:translateX(1rem); }
+
+  /* ===== quote-result tags ===== */
+  .qtag{ display:inline-flex; align-items:center; gap:.3rem; border-radius:9999px; padding:.2rem .55rem; font-size:.68rem; font-weight:800; letter-spacing:.02em; line-height:1; border:1px solid transparent; text-transform:uppercase; }
+  .qtag--rec{ background:#E9EDF7; color:#2A3E8A; border-color:#C9D4EE; }
+  .qtag--cheap{ background:#ECF8E8; color:#3F7F22; border-color:#CBEEC0; }
+  .qtag--fast{ background:#E0F2FE; color:#0369a1; border-color:#bae6fd; }
+  .qtag--value{ background:#FFF7E6; color:#8a4b02; border-color:#FCD9A1; }
+  .qtag--eco{ background:#ECFDF5; color:#047857; border-color:#A7F3D0; }
+
+  /* provider monogram */
+  .mono{ width:2.75rem; height:2.75rem; border-radius:.75rem; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:.8rem; color:#fff; letter-spacing:.02em; flex:none; box-shadow:0 1px 2px rgba(2,6,23,.15); }
+
+  /* quote card */
+  .qcard{ border-radius:1rem; background:#fff; border:1px solid rgba(226,232,240,.9); box-shadow:0 1px 2px rgba(2,6,23,.05); transition:box-shadow .2s, border-color .2s; overflow:hidden; }
+  .qcard:hover{ box-shadow:0 8px 22px rgba(2,6,23,.08); }
+  .qcard.is-compared{ border-color:var(--brand-primary); box-shadow:0 0 0 1px var(--brand-primary); }
+  .qcard.is-rec{ border-color:#c9d4ee; }
+  .qcard .qbody{ padding:1rem 1.15rem; }
+  .seg{ display:flex; align-items:center; gap:.45rem; font-size:.82rem; color:#334155; }
+  .seg .k{ font-size:.66rem; text-transform:uppercase; letter-spacing:.04em; color:#94a3b8; font-weight:700; }
+  .svc-chip{ display:inline-flex; align-items:center; gap:.3rem; font-size:.72rem; font-weight:600; color:#475569; background:#f8fafc; border:1px solid #eef2f7; border-radius:9999px; padding:.25rem .55rem; }
+  .svc-chip.off{ color:#cbd5e1; text-decoration:line-through; }
+  .co2{ display:inline-flex; align-items:center; gap:.3rem; font-size:.72rem; font-weight:700; border-radius:9999px; padding:.25rem .55rem; border:1px solid transparent; }
+  .co2--low{ background:#ECFDF5; color:#047857; border-color:#A7F3D0; }
+  .co2--mid{ background:#FFFAE6; color:#8F6A00; border-color:#F0E39F; }
+  .co2--high{ background:#fff1f2; color:#be123c; border-color:#fecdd3; }
+
+  /* route strip */
+  .routestrip{ display:flex; align-items:center; gap:.5rem; }
+  .routestrip .leg{ position:relative; flex:1; min-width:60px; height:2px; background:repeating-linear-gradient(90deg,#cbd5e1 0 6px,transparent 6px 12px); }
+  .routestrip .leg .ship{ position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); background:#fff; padding:0 3px; color:var(--brand-primary); }
+  .routestrip .dot{ width:.7rem; height:.7rem; border-radius:9999px; background:var(--brand-primary); flex:none; }
+  .routestrip .dot.alt{ background:#fff; border:2px solid #cbd5e1; }
+
+  /* pricing breakdown */
+  .brk-row{ display:flex; justify-content:space-between; gap:1rem; padding:.4rem 0; font-size:.84rem; border-bottom:1px dashed #eef2f7; }
+  .brk-row:last-child{ border-bottom:0; }
+  .brk-row .k{ color:#475569; display:flex; align-items:center; gap:.4rem; }
+  .brk-row .v{ font-weight:700; color:#0f172a; }
+  .brk-row.muted .v{ color:#94a3b8; font-weight:600; }
+  .brk-total{ display:flex; justify-content:space-between; align-items:center; margin-top:.5rem; padding-top:.6rem; border-top:2px solid #e2e8f0; }
+
+  /* timeline preview */
+  .tl{ display:flex; align-items:flex-start; gap:0; overflow-x:auto; padding:.25rem 0; }
+  .tl .node{ display:flex; flex-direction:column; align-items:center; gap:.3rem; min-width:84px; text-align:center; }
+  .tl .bub{ width:1.9rem; height:1.9rem; border-radius:9999px; background:var(--brand-50); color:var(--brand-primary); display:flex; align-items:center; justify-content:center; border:1px solid #d8e0f3; }
+  .tl .segln{ flex:1; height:2px; background:#e2e8f0; margin-top:.95rem; min-width:28px; }
+  .tl .t-lbl{ font-size:.72rem; font-weight:700; color:#0f172a; }
+  .tl .t-sub{ font-size:.66rem; color:#94a3b8; }
+
+  /* filter sidebar */
+  .filter-side{ position:sticky; top:1rem; }
+  .range{ -webkit-appearance:none; width:100%; height:4px; border-radius:9999px; background:#e2e8f0; outline:none; }
+  .range::-webkit-slider-thumb{ -webkit-appearance:none; width:16px; height:16px; border-radius:9999px; background:var(--brand-primary); cursor:pointer; box-shadow:0 1px 3px rgba(2,6,23,.25); }
+  .range::-moz-range-thumb{ width:16px; height:16px; border:0; border-radius:9999px; background:var(--brand-primary); cursor:pointer; }
+  .check{ display:flex; align-items:center; gap:.55rem; padding:.3rem 0; font-size:.84rem; color:#334155; cursor:pointer; }
+  .check input{ width:1rem; height:1rem; accent-color:var(--brand-primary); }
+
+  /* compare bar + modal */
+  .cmp-bar{ position:fixed; left:0; right:0; bottom:0; z-index:45; background:#fff; border-top:1px solid #e2e8f0; box-shadow:0 -6px 20px rgba(2,6,23,.08); transform:translateY(110%); transition:transform .25s ease; }
+  .cmp-bar.show{ transform:translateY(0); }
+  .modal{ position:fixed; inset:0; z-index:60; background:rgba(15,23,42,.5); display:none; align-items:flex-start; justify-content:center; padding:1rem; overflow:auto; }
+  .modal.show{ display:flex; }
+  .cmp-table{ width:100%; border-collapse:separate; border-spacing:0; }
+  .cmp-table th, .cmp-table td{ padding:.7rem .8rem; text-align:left; font-size:.82rem; border-bottom:1px solid #eef2f7; vertical-align:top; }
+  .cmp-table thead th{ position:sticky; top:0; background:#f8fafc; z-index:2; }
+  .cmp-table td.attr, .cmp-table th.attr{ position:sticky; left:0; background:#fff; font-weight:700; color:#475569; z-index:1; }
+  .cmp-table thead th.attr{ background:#f8fafc; z-index:3; }
+
+  /* skeleton */
+  .sk{ background:linear-gradient(90deg,#e9edf3 0%,#f3f6fb 50%,#e9edf3 100%); background-size:1000px 100%; animation:sh 1.4s infinite linear; border-radius:8px; }
+  @keyframes sh{0%{background-position:-500px 0}100%{background-position:500px 0}}
+
+  /* drawer (mobile filters) */
+  .drawer{ position:fixed; inset:0; z-index:55; display:none; }
+  .drawer.show{ display:block; }
+  .drawer .scrim{ position:absolute; inset:0; background:rgba(15,23,42,.45); }
+  .drawer .panel{ position:absolute; top:0; bottom:0; left:0; width:86%; max-width:340px; background:#fff; padding:1rem; overflow:auto; box-shadow:4px 0 24px rgba(2,6,23,.18); }
+
+  /* ---- interaction hardening (icons/decoration never block clicks) ---- */
+  [data-lucide], svg.lucide, .lucide{ pointer-events:none; }
+  .routestrip .leg, .routestrip .leg .ship, .tl .segln{ pointer-events:none; }
+  .switch .track::before{ pointer-events:none; }
+  input, select, textarea, button, label, a, .pill{ position:relative; }
+  :focus-visible{ outline:2px solid var(--brand-primary); outline-offset:2px; }
+  @media (prefers-reduced-motion: reduce){ .sk{ animation:none; } }
+</style>
+</head>
+
+<body class="pb-28 lg:pb-6">
+
+<!-- ============ HEADER ============ -->
+<header class="border-b border-slate-200 bg-white/90 backdrop-blur sticky top-0 z-30">
+  <div class="mx-auto max-w-[1400px] px-4 py-3 flex items-center gap-3">
+    <a href="#" class="flex items-center gap-1.5 text-slate-600 font-medium hover:text-slate-900 transition"><i data-lucide="arrow-left" class="w-4 h-4"></i> <span class="hidden sm:inline">Edit request</span></a>
+    <span class="chip chip--mode ml-1"><i data-lucide="ship" class="w-4 h-4"></i> FCL · Sea</span>
+    <span class="badge badge--active"><i data-lucide="arrow-up" class="w-3.5 h-3.5"></i> Export</span>
+    <div class="ml-auto flex items-center gap-2">
+      <span class="hidden md:inline-flex items-center gap-1.5 text-xs font-semibold text-ok"><span class="w-2 h-2 rounded-full bg-ok inline-block animate-pulse"></span> Live rates</span>
+      <button class="btn btn-ghost btn-sm"><i data-lucide="bookmark" class="w-4 h-4"></i><span class="hidden sm:inline">Save</span></button>
+      <button class="btn btn-ghost btn-sm"><i data-lucide="share-2" class="w-4 h-4"></i><span class="hidden sm:inline">Share</span></button>
+      <button class="btn btn-ghost btn-sm"><i data-lucide="download" class="w-4 h-4"></i><span class="hidden sm:inline">PDF</span></button>
+    </div>
+  </div>
+</header>
+
+<div class="mx-auto max-w-[1400px] px-4 py-5">
+
+  <!-- ============ QUOTE SUMMARY HEADER ============ -->
+  <section class="card mb-5 !p-0 overflow-hidden">
+    <div class="relative px-5 py-4" style="background:linear-gradient(180deg,#fbfdff,#f3f6fc)">
+      <div class="absolute left-0 top-0 bottom-0 w-1 bg-brand"></div>
+      <div class="flex flex-wrap items-center justify-between gap-4">
+        <div class="min-w-0">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="text-lg sm:text-xl font-extrabold text-ink">Los Angeles</span>
+            <span class="text-xs font-bold text-muted">USLAX</span>
+            <i data-lucide="arrow-right" class="w-4 h-4 text-slate-400"></i>
+            <span class="text-lg sm:text-xl font-extrabold text-ink">Shanghai</span>
+            <span class="text-xs font-bold text-muted">CNSHA</span>
+          </div>
+          <div class="text-xs text-muted mt-1 flex items-center gap-1.5"><i data-lucide="clock" class="w-3.5 h-3.5"></i> Request #Q-2026-0042 · received <span class="font-semibold text-slate-600">just now</span></div>
+        </div>
+        <div class="text-right">
+          <div class="text-3xl font-extrabold text-brand leading-none" id="quoteCount">6</div>
+          <div class="field-label">quotes received</div>
+        </div>
+      </div>
+
+      <!-- summary stat chips -->
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mt-4">
+        <div class="rounded-control bg-white border border-slate-200 px-3 py-2"><div class="field-label">Mode</div><div class="text-sm font-bold text-ink flex items-center gap-1.5 mt-0.5"><i data-lucide="ship" class="w-4 h-4 text-brand"></i> Ocean</div></div>
+        <div class="rounded-control bg-white border border-slate-200 px-3 py-2"><div class="field-label">Shipment</div><div class="text-sm font-bold text-ink mt-0.5">FCL · Export</div></div>
+        <div class="rounded-control bg-white border border-slate-200 px-3 py-2"><div class="field-label">Cargo</div><div class="text-sm font-bold text-ink mt-0.5">2 × 40′ HC</div></div>
+        <div class="rounded-control bg-white border border-slate-200 px-3 py-2"><div class="field-label">Gross weight</div><div class="text-sm font-bold text-ink mt-0.5">36,000 kg</div></div>
+        <div class="rounded-control bg-white border border-slate-200 px-3 py-2"><div class="field-label">Volume</div><div class="text-sm font-bold text-ink mt-0.5">≈ 134 m³</div></div>
+        <div class="rounded-control bg-white border border-slate-200 px-3 py-2"><div class="field-label">Cargo ready</div><div class="text-sm font-bold text-ink mt-0.5">28 May 2026</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ BODY: filters + results ============ -->
+  <div class="grid grid-cols-12 gap-5">
+
+    <!-- FILTER SIDEBAR (desktop) -->
+    <aside class="hidden lg:block lg:col-span-3">
+      <div class="filter-side card" id="filterCardDesktop"><!-- filled by JS --></div>
+    </aside>
+
+    <!-- RESULTS -->
+    <main class="col-span-12 lg:col-span-9 space-y-4">
+
+      <!-- toolbar -->
+      <div class="card card--tight flex flex-wrap items-center gap-3 sticky top-[64px] z-20">
+        <button class="btn btn-ghost btn-sm lg:hidden" id="openFilters"><i data-lucide="sliders-horizontal" class="w-4 h-4"></i> Filters <span class="badge badge--active" id="filterCount">0</span></button>
+        <div class="text-sm text-slate-600"><strong class="text-ink" id="resCount">6</strong> options · <span class="text-muted">USLAX → CNSHA</span></div>
+        <div class="ml-auto flex items-center gap-2 flex-wrap">
+          <span class="field-label hidden sm:inline">Sort</span>
+          <div class="flex items-center gap-1" id="sortSeg">
+            <button class="pill pill--on" data-sort="value"><i data-lucide="sparkles" class="w-3.5 h-3.5"></i> Best value</button>
+            <button class="pill" data-sort="price"><i data-lucide="dollar-sign" class="w-3.5 h-3.5"></i> Cheapest</button>
+            <button class="pill" data-sort="transit"><i data-lucide="timer" class="w-3.5 h-3.5"></i> Fastest</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- results list -->
+      <div id="results" class="space-y-4"></div>
+
+      <!-- contact sales -->
+      <div class="card flex flex-wrap items-center gap-3 justify-between bg-brand-50 border-[#d8e0f3]">
+        <div class="flex items-center gap-3"><span class="mono" style="background:#2A3E8A"><i data-lucide="headset" class="w-5 h-5"></i></span>
+          <div><div class="font-bold text-ink">Need a custom rate or special cargo?</div><div class="text-sm text-muted">Our export desk can negotiate volume and project rates.</div></div></div>
+        <button class="btn btn-primary"><i data-lucide="phone" class="w-4 h-4"></i> Contact sales</button>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ============ COMPARE BAR ============ -->
+<div class="cmp-bar" id="cmpBar">
+  <div class="mx-auto max-w-[1400px] px-4 py-3 flex items-center gap-3">
+    <div class="text-sm font-bold text-ink flex items-center gap-2"><i data-lucide="git-compare" class="w-4 h-4 text-brand"></i> Compare <span id="cmpCount" class="badge badge--active">0</span></div>
+    <div id="cmpChips" class="hidden sm:flex items-center gap-2 flex-wrap text-xs"></div>
+    <div class="ml-auto flex items-center gap-2">
+      <button class="btn btn-ghost btn-sm" id="cmpClear">Clear</button>
+      <button class="btn btn-primary btn-sm" id="cmpOpen"><i data-lucide="columns-3" class="w-4 h-4"></i> Compare</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ COMPARE MODAL ============ -->
+<div class="modal" id="cmpModal">
+  <div class="card w-full max-w-5xl mt-6 !p-0 overflow-hidden">
+    <div class="flex items-center justify-between px-5 py-3 border-b border-slate-200">
+      <h3 class="font-extrabold text-ink flex items-center gap-2"><i data-lucide="columns-3" class="w-5 h-5 text-brand"></i> Compare quotes</h3>
+      <button class="btn btn-ghost btn-sm" id="cmpClose"><i data-lucide="x" class="w-4 h-4"></i></button>
+    </div>
+    <div class="overflow-auto" style="max-height:75vh"><table class="cmp-table" id="cmpTable"></table></div>
+  </div>
+</div>
+
+<!-- ============ MOBILE FILTER DRAWER ============ -->
+<div class="drawer" id="drawer">
+  <div class="scrim" id="drawerScrim"></div>
+  <div class="panel">
+    <div class="flex items-center justify-between mb-3"><h3 class="font-extrabold text-ink">Filters</h3><button class="btn btn-ghost btn-sm" id="closeDrawer"><i data-lucide="x" class="w-4 h-4"></i></button></div>
+    <div id="filterCardMobile"><!-- filled by JS --></div>
+  </div>
+</div>
+
+<script>
+  const refresh = () => window.lucide && lucide.createIcons();
+
+  /* ===================== DATA ===================== */
+  const QUOTES = [
+    { id:'maeu', carrier:'Maersk', code:'MAEU', color:'#0Ea5a4', routing:'Direct', transitMin:18, transitMax:22, etd:'28 May', eta:'18 Jun', d2d:true, insurance:true, customs:true, tracking:true, co2:1.2, validTo:'06 Jun 2026', status:'Space available',
+      brk:{ Freight:3200, 'Fuel surcharge (BAF)':420, 'Origin handling (THC)':310, 'Destination handling':260, 'Customs clearance':180, Insurance:140, Documentation:90, 'Duties & taxes':0, Additional:220 } },
+    { id:'mscu', carrier:'MSC', code:'MSCU', color:'#1f3a8a', routing:'1 transshipment', via:'Busan', transitMin:22, transitMax:26, etd:'30 May', eta:'24 Jun', d2d:false, insurance:false, customs:true, tracking:true, co2:1.5, validTo:'04 Jun 2026', status:'3 left at this rate',
+      brk:{ Freight:3050, 'Fuel surcharge (BAF)':390, 'Origin handling (THC)':300, 'Destination handling':240, 'Customs clearance':170, Insurance:0, Documentation:90, 'Duties & taxes':0, Additional:270 } },
+    { id:'cmdu', carrier:'CMA CGM', code:'CMDU', color:'#0b2e6b', routing:'Direct', transitMin:16, transitMax:19, etd:'27 May', eta:'15 Jun', d2d:true, insurance:true, customs:true, tracking:true, co2:1.3, validTo:'05 Jun 2026', status:'Space available',
+      brk:{ Freight:3520, 'Fuel surcharge (BAF)':450, 'Origin handling (THC)':320, 'Destination handling':270, 'Customs clearance':180, Insurance:150, Documentation:90, 'Duties & taxes':0, Additional:200 } },
+    { id:'hlcu', carrier:'Hapag-Lloyd', code:'HLCU', color:'#e8761a', routing:'Direct', transitMin:19, transitMax:23, etd:'29 May', eta:'20 Jun', d2d:true, insurance:true, customs:true, tracking:true, co2:1.0, validTo:'07 Jun 2026', status:'Space available',
+      brk:{ Freight:3260, 'Fuel surcharge (BAF)':410, 'Origin handling (THC)':315, 'Destination handling':265, 'Customs clearance':180, Insurance:145, Documentation:90, 'Duties & taxes':0, Additional:225 } },
+    { id:'oney', carrier:'ONE', code:'ONEY', color:'#c2167a', routing:'1 transshipment', via:'Singapore', transitMin:21, transitMax:25, etd:'31 May', eta:'25 Jun', d2d:false, insurance:true, customs:false, tracking:true, co2:1.4, validTo:'03 Jun 2026', status:'Limited space',
+      brk:{ Freight:3180, 'Fuel surcharge (BAF)':400, 'Origin handling (THC)':305, 'Destination handling':250, 'Customs clearance':0, Insurance:135, Documentation:90, 'Duties & taxes':0, Additional:330 } },
+    { id:'cosu', carrier:'COSCO', code:'COSU', color:'#16489a', routing:'2 transshipments', via:'Ningbo + Busan', transitMin:24, transitMax:28, etd:'01 Jun', eta:'29 Jun', d2d:false, insurance:false, customs:false, tracking:true, co2:1.7, validTo:'02 Jun 2026', status:'Cheapest available',
+      brk:{ Freight:3000, 'Fuel surcharge (BAF)':380, 'Origin handling (THC)':300, 'Destination handling':230, 'Customs clearance':0, Insurance:0, Documentation:90, 'Duties & taxes':0, Additional:430 } },
+  ];
+  const total = q => Object.values(q.brk).reduce((a,b)=>a+b,0);
+  const fmt = n => '$'+n.toLocaleString();
+  QUOTES.forEach(q=>q.total=total(q));
+
+  // tags: cheapest / fastest / recommended / best value / eco
+  const cheapest=[...QUOTES].sort((a,b)=>a.total-b.total)[0];
+  const fastest=[...QUOTES].sort((a,b)=>a.transitMin-b.transitMin)[0];
+  const eco=[...QUOTES].sort((a,b)=>a.co2-b.co2)[0];
+  // value score: normalize price + transit (lower better), bonus for services
+  const maxP=Math.max(...QUOTES.map(q=>q.total)), minP=Math.min(...QUOTES.map(q=>q.total));
+  const maxT=Math.max(...QUOTES.map(q=>q.transitMax)), minT=Math.min(...QUOTES.map(q=>q.transitMax));
+  QUOTES.forEach(q=>{ const np=(q.total-minP)/(maxP-minP||1), nt=(q.transitMax-minT)/(maxT-minT||1);
+    const svc=(q.insurance?0:.05)+(q.customs?0:.05)+(q.d2d?0:.05)+(q.routing==='Direct'?-0.05:0);
+    q.value = np*0.5 + nt*0.4 + svc; });
+  const bestValue=[...QUOTES].sort((a,b)=>a.value-b.value)[0];
+  QUOTES.forEach(q=>{ q.tags=[];
+    if(q===bestValue) q.tags.push('value');
+    if(q===cheapest) q.tags.push('cheap');
+    if(q===fastest) q.tags.push('fast');
+    if(q===eco) q.tags.push('eco'); });
+  // recommended = best value unless that's also cheapest/fastest; pick Maersk-style balanced -> use bestValue as recommended
+  bestValue.tags.unshift('rec');
+
+  const TAGS={ rec:{l:'Recommended',i:'star'}, cheap:{l:'Cheapest',i:'badge-dollar-sign'}, fast:{l:'Fastest',i:'zap'}, value:{l:'Best value',i:'sparkles'}, eco:{l:'Lowest CO₂',i:'leaf'} };
+  const co2Level = t => t<=1.1?'low':t<=1.5?'mid':'high';
+
+  /* ===================== STATE ===================== */
+  const carriers=[...new Set(QUOTES.map(q=>q.carrier))];
+  const state={ sort:'value', directOnly:false, insOnly:false, cusOnly:false, d2dOnly:false, maxPrice:maxP, maxTransit:maxT, carriers:new Set(carriers), compare:new Set() };
+
+  /* ===================== FILTER PANEL ===================== */
+  function filterHTML(){
+    return `
+      <h3 class="font-extrabold text-ink flex items-center gap-2 mb-3"><i data-lucide="sliders-horizontal" class="w-4 h-4 text-brand"></i> Filters
+        <button class="ml-auto text-xs font-semibold text-brand" data-fclear>Reset</button></h3>
+
+      <div class="mb-4"><div class="field-label mb-1">Max price · <span data-pxv class="text-brand font-bold">${fmt(state.maxPrice)}</span></div>
+        <input type="range" class="range" min="${minP}" max="${maxP}" value="${state.maxPrice}" data-f="maxPrice"></div>
+
+      <div class="mb-4"><div class="field-label mb-1">Max transit · <span data-ttv class="text-brand font-bold">${state.maxTransit} days</span></div>
+        <input type="range" class="range" min="${minT}" max="${maxT}" value="${state.maxTransit}" data-f="maxTransit"></div>
+
+      <div class="mb-4 space-y-1">
+        <div class="field-label mb-1">Requirements</div>
+        <label class="flex items-center justify-between text-sm py-1"><span>Direct only</span><span class="switch"><input type="checkbox" data-f="directOnly" ${state.directOnly?'checked':''}><span class="track"></span></span></label>
+        <label class="flex items-center justify-between text-sm py-1"><span>Door-to-door</span><span class="switch"><input type="checkbox" data-f="d2dOnly" ${state.d2dOnly?'checked':''}><span class="track"></span></span></label>
+        <label class="flex items-center justify-between text-sm py-1"><span>Insurance included</span><span class="switch"><input type="checkbox" data-f="insOnly" ${state.insOnly?'checked':''}><span class="track"></span></span></label>
+        <label class="flex items-center justify-between text-sm py-1"><span>Customs included</span><span class="switch"><input type="checkbox" data-f="cusOnly" ${state.cusOnly?'checked':''}><span class="track"></span></span></label>
+      </div>
+
+      <div><div class="field-label mb-1">Carrier</div>
+        ${carriers.map(c=>`<label class="check"><input type="checkbox" data-carrier="${c}" ${state.carriers.has(c)?'checked':''}> ${c}</label>`).join('')}
+      </div>`;
+  }
+  function mountFilters(){
+    ['filterCardDesktop','filterCardMobile'].forEach(id=>{const el=document.getElementById(id); if(el) el.innerHTML=filterHTML();});
+    refresh();
+  }
+  document.addEventListener('input', e=>{
+    const f=e.target.dataset.f;
+    if(f){ state[f] = e.target.type==='checkbox'? e.target.checked : +e.target.value; syncRangeLabels(); render(); }
+    if(e.target.dataset.carrier!=null){ const c=e.target.dataset.carrier; e.target.checked?state.carriers.add(c):state.carriers.delete(c); render(); }
+  });
+  document.addEventListener('click', e=>{ if(e.target.closest('[data-fclear]')){ Object.assign(state,{directOnly:false,insOnly:false,cusOnly:false,d2dOnly:false,maxPrice:maxP,maxTransit:maxT,carriers:new Set(carriers)}); mountFilters(); render(); }});
+  function syncRangeLabels(){ document.querySelectorAll('[data-pxv]').forEach(el=>el.textContent=fmt(state.maxPrice)); document.querySelectorAll('[data-ttv]').forEach(el=>el.textContent=state.maxTransit+' days'); }
+
+  /* ===================== RENDER CARDS ===================== */
+  function passes(q){
+    if(state.directOnly && q.routing!=='Direct') return false;
+    if(state.d2dOnly && !q.d2d) return false;
+    if(state.insOnly && !q.insurance) return false;
+    if(state.cusOnly && !q.customs) return false;
+    if(q.total>state.maxPrice) return false;
+    if(q.transitMax>state.maxTransit) return false;
+    if(!state.carriers.has(q.carrier)) return false;
+    return true;
+  }
+  function sortList(list){
+    const s=state.sort;
+    return list.sort((a,b)=> s==='price'?a.total-b.total : s==='transit'?a.transitMin-b.transitMin : a.value-b.value);
+  }
+  function svc(on,icon,label){ return `<span class="svc-chip ${on?'':'off'}"><i data-lucide="${on?icon:'x'}" class="w-3.5 h-3.5"></i> ${label}</span>`; }
+
+  function cardHTML(q){
+    const tags=q.tags.map(t=>`<span class="qtag qtag--${t}"><i data-lucide="${TAGS[t].i}" class="w-3 h-3"></i> ${TAGS[t].l}</span>`).join('');
+    const cl=co2Level(q.co2);
+    const compared=state.compare.has(q.id);
+    return `<article class="qcard ${q.tags.includes('rec')?'is-rec':''} ${compared?'is-compared':''}" data-id="${q.id}">
+      <div class="qbody">
+        <div class="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-4">
+          <!-- left -->
+          <div class="min-w-0">
+            <div class="flex items-start gap-3">
+              <span class="mono" style="background:${q.color}">${q.code}</span>
+              <div class="min-w-0">
+                <div class="flex items-center gap-2 flex-wrap">
+                  <span class="font-extrabold text-ink text-[1.05rem]">${q.carrier}</span>
+                  <span class="chip chip--mode" style="padding:.12rem .45rem;font-size:.66rem"><i data-lucide="ship" class="w-3 h-3"></i> Ocean · FCL</span>
+                </div>
+                <div class="flex items-center gap-1.5 flex-wrap mt-1">${tags}</div>
+              </div>
+            </div>
+
+            <!-- route strip -->
+            <div class="routestrip mt-4">
+              <div class="text-center"><div class="text-sm font-extrabold text-ink">${q.etd}</div><div class="t-sub text-[.66rem] text-muted">ETD · USLAX</div></div>
+              <span class="dot"></span>
+              <div class="leg">${q.via?`<span class="ship"><i data-lucide="anchor" class="w-3.5 h-3.5"></i></span>`:`<span class="ship"><i data-lucide="ship" class="w-3.5 h-3.5"></i></span>`}</div>
+              <span class="dot alt"></span>
+              <div class="text-center"><div class="text-sm font-extrabold text-ink">${q.eta}</div><div class="t-sub text-[.66rem] text-muted">ETA · CNSHA</div></div>
+            </div>
+            <div class="flex flex-wrap items-center gap-x-5 gap-y-2 mt-3">
+              <div class="seg"><i data-lucide="timer" class="w-4 h-4 text-brand"></i><div><div class="k">Transit</div>${q.transitMin}–${q.transitMax} days</div></div>
+              <div class="seg"><i data-lucide="${q.routing==='Direct'?'move-right':'shuffle'}" class="w-4 h-4 text-brand"></i><div><div class="k">Routing</div>${q.routing}${q.via?` · ${q.via}`:''}</div></div>
+              <div class="seg"><i data-lucide="${q.d2d?'door-open':'anchor'}" class="w-4 h-4 text-brand"></i><div><div class="k">Service</div>${q.d2d?'Door to door':'Port to port'}</div></div>
+            </div>
+
+            <!-- services + co2 -->
+            <div class="flex flex-wrap items-center gap-2 mt-3">
+              ${svc(q.insurance,'shield-check','Insurance')}
+              ${svc(q.customs,'file-check-2','Customs')}
+              ${svc(q.tracking,'radar','Live tracking')}
+              <span class="co2 co2--${cl}"><i data-lucide="leaf" class="w-3.5 h-3.5"></i> ${q.co2} t CO₂</span>
+              <span class="text-[.7rem] text-muted ml-auto flex items-center gap-1"><i data-lucide="zap" class="w-3 h-3 text-warn"></i> ${q.status}</span>
+            </div>
+          </div>
+
+          <!-- right: price + actions -->
+          <div class="md:text-right md:border-l md:border-slate-100 md:pl-4 flex md:block items-end justify-between">
+            <div>
+              <div class="text-2xl font-extrabold text-ink leading-none">${fmt(q.total)}</div>
+              <div class="field-label mt-1">total landed cost</div>
+              <div class="text-[.7rem] text-muted mt-1 flex items-center gap-1 md:justify-end"><i data-lucide="calendar-clock" class="w-3 h-3"></i> Valid to ${q.validTo}</div>
+            </div>
+            <div class="flex md:flex-col gap-2 md:mt-3 items-end">
+              <button class="btn btn-primary btn-sm w-full whitespace-nowrap"><i data-lucide="check-circle-2" class="w-4 h-4"></i> Request booking</button>
+              <label class="check text-xs justify-center md:justify-end"><input type="checkbox" data-cmp="${q.id}" ${compared?'checked':''}> Compare</label>
+            </div>
+          </div>
+        </div>
+
+        <!-- expander -->
+        <button class="mt-3 w-full text-sm font-semibold text-brand flex items-center justify-center gap-1.5 py-2 rounded-control hover:bg-brand-50" data-expand="${q.id}">
+          <i data-lucide="chevron-down" class="w-4 h-4" data-caret="${q.id}"></i> Pricing breakdown &amp; route details
+        </button>
+      </div>
+
+      <!-- expanded -->
+      <div class="hidden border-t border-slate-100 bg-[#fbfdff] px-4 py-4" data-details="${q.id}">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          <div>
+            <div class="field-label mb-2 flex items-center gap-1.5"><i data-lucide="receipt-text" class="w-3.5 h-3.5"></i> Pricing breakdown</div>
+            ${Object.entries(q.brk).map(([k,v])=>`<div class="brk-row ${v===0?'muted':''}"><span class="k"><i data-lucide="dot" class="w-3 h-3"></i> ${k}</span><span class="v">${v===0?(k.includes('Duties')?'At destination':'Not included'):fmt(v)}</span></div>`).join('')}
+            <div class="brk-total"><span class="font-extrabold text-ink">Total landed cost</span><span class="text-xl font-extrabold text-brand">${fmt(q.total)}</span></div>
+            <p class="text-[.7rem] text-muted mt-2">All-in for 2 × 40′HC · USD · excludes destination import duties payable by consignee.</p>
+          </div>
+          <div>
+            <div class="field-label mb-2 flex items-center gap-1.5"><i data-lucide="route" class="w-3.5 h-3.5"></i> Route &amp; tracking preview</div>
+            <div class="tl">
+              <div class="node"><span class="bub"><i data-lucide="warehouse" class="w-4 h-4"></i></span><span class="t-lbl">Pickup</span><span class="t-sub">${q.d2d?'Los Angeles':'—'}</span></div>
+              <div class="segln"></div>
+              <div class="node"><span class="bub"><i data-lucide="anchor" class="w-4 h-4"></i></span><span class="t-lbl">USLAX</span><span class="t-sub">ETD ${q.etd}</span></div>
+              <div class="segln"></div>
+              ${q.via?`<div class="node"><span class="bub"><i data-lucide="shuffle" class="w-4 h-4"></i></span><span class="t-lbl">Via</span><span class="t-sub">${q.via}</span></div><div class="segln"></div>`:''}
+              <div class="node"><span class="bub"><i data-lucide="anchor" class="w-4 h-4"></i></span><span class="t-lbl">CNSHA</span><span class="t-sub">ETA ${q.eta}</span></div>
+              ${q.d2d?`<div class="segln"></div><div class="node"><span class="bub"><i data-lucide="map-pin" class="w-4 h-4"></i></span><span class="t-lbl">Delivery</span><span class="t-sub">Shanghai</span></div>`:''}
+            </div>
+            <div class="flex gap-2 mt-4">
+              <button class="btn btn-soft-primary btn-sm"><i data-lucide="download" class="w-4 h-4"></i> Download PDF</button>
+              <button class="btn btn-ghost btn-sm"><i data-lucide="share-2" class="w-4 h-4"></i> Share</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </article>`;
+  }
+
+  function render(){
+    const list=sortList(QUOTES.filter(passes));
+    const wrap=document.getElementById('results');
+    if(!list.length){ wrap.innerHTML=`<div class="card text-center py-12"><i data-lucide="search-x" class="w-10 h-10 text-slate-300 mx-auto mb-3"></i><p class="font-bold text-slate-600">No quotes match your filters</p><p class="text-sm text-muted mt-1">Try widening price or transit, or reset filters.</p></div>`; }
+    else { wrap.innerHTML=list.map(cardHTML).join(''); }
+    document.getElementById('resCount').textContent=list.length;
+    document.getElementById('quoteCount').textContent=QUOTES.length;
+    const fc=[state.directOnly,state.d2dOnly,state.insOnly,state.cusOnly].filter(Boolean).length+(state.maxPrice<maxP?1:0)+(state.maxTransit<maxT?1:0)+(state.carriers.size<carriers.length?1:0);
+    document.getElementById('filterCount').textContent=fc;
+    refresh();
+  }
+
+  /* ===================== EXPAND / COMPARE ===================== */
+  document.addEventListener('click', e=>{
+    const ex=e.target.closest('[data-expand]');
+    if(ex){ const id=ex.dataset.expand; document.querySelector(`[data-details="${id}"]`).classList.toggle('hidden'); const c=document.querySelector(`[data-caret="${id}"]`); if(c) c.style.transform=c.style.transform?'':'rotate(180deg)'; refresh(); }
+  });
+  document.addEventListener('change', e=>{
+    if(e.target.dataset.cmp!=null){ const id=e.target.dataset.cmp;
+      if(e.target.checked){ if(state.compare.size>=3){ e.target.checked=false; alert('Compare up to 3 quotes at a time.'); return; } state.compare.add(id); }
+      else state.compare.delete(id);
+      document.querySelector(`.qcard[data-id="${id}"]`)?.classList.toggle('is-compared',state.compare.has(id));
+      updateCmpBar();
+    }
+  });
+  function updateCmpBar(){
+    const bar=document.getElementById('cmpBar'); const n=state.compare.size;
+    document.getElementById('cmpCount').textContent=n;
+    bar.classList.toggle('show',n>0);
+    document.getElementById('cmpChips').innerHTML=[...state.compare].map(id=>{const q=QUOTES.find(x=>x.id===id); return `<span class="badge badge--active">${q.carrier} · ${fmt(q.total)}</span>`;}).join('');
+    document.getElementById('cmpOpen').disabled=n<2;
+    refresh();
+  }
+  document.getElementById('cmpClear').addEventListener('click', ()=>{ state.compare.clear(); render(); updateCmpBar(); });
+
+  /* compare modal */
+  const ATTRS=[
+    ['Total landed cost', q=>`<span class="text-lg font-extrabold text-brand">${fmt(q.total)}</span>`],
+    ['Transit time', q=>`${q.transitMin}–${q.transitMax} days`],
+    ['ETD → ETA', q=>`${q.etd} → ${q.eta}`],
+    ['Routing', q=>q.routing+(q.via?` · ${q.via}`:'')],
+    ['Service', q=>q.d2d?'Door to door':'Port to port'],
+    ['Insurance', q=>q.insurance?'✓ Included':'—'],
+    ['Customs', q=>q.customs?'✓ Included':'—'],
+    ['Live tracking', q=>q.tracking?'✓':'—'],
+    ['CO₂', q=>`${q.co2} t`],
+    ['Freight', q=>fmt(q.brk.Freight)],
+    ['Fuel surcharge', q=>fmt(q.brk['Fuel surcharge (BAF)'])],
+    ['Handling (O+D)', q=>fmt(q.brk['Origin handling (THC)']+q.brk['Destination handling'])],
+    ['Valid to', q=>q.validTo],
+  ];
+  function openCmp(){
+    const sel=[...state.compare].map(id=>QUOTES.find(q=>q.id===id));
+    const t=document.getElementById('cmpTable');
+    t.innerHTML = `<thead><tr><th class="attr">Attribute</th>${sel.map(q=>`<th><div class="flex items-center gap-2"><span class="mono" style="background:${q.color};width:1.8rem;height:1.8rem;font-size:.6rem">${q.code}</span> ${q.carrier} ${q.tags.includes('rec')?'<span class="qtag qtag--rec">Rec</span>':''}</div></th>`).join('')}</tr></thead>
+      <tbody>${ATTRS.map(([label,fn])=>`<tr><td class="attr">${label}</td>${sel.map(q=>`<td>${fn(q)}</td>`).join('')}</tr>`).join('')}
+      <tr><td class="attr"></td>${sel.map(()=>`<td><button class="btn btn-primary btn-sm"><i data-lucide="check-circle-2" class="w-4 h-4"></i> Book</button></td>`).join('')}</tr></tbody>`;
+    document.getElementById('cmpModal').classList.add('show'); refresh();
+  }
+  document.getElementById('cmpOpen').addEventListener('click', ()=>{ if(state.compare.size>=2) openCmp(); });
+  document.getElementById('cmpClose').addEventListener('click', ()=>document.getElementById('cmpModal').classList.remove('show'));
+  document.getElementById('cmpModal').addEventListener('click', e=>{ if(e.target.id==='cmpModal') e.target.classList.remove('show'); });
+
+  /* ===================== SORT + DRAWER ===================== */
+  document.getElementById('sortSeg').addEventListener('click', e=>{ const b=e.target.closest('[data-sort]'); if(!b)return; state.sort=b.dataset.sort; document.querySelectorAll('#sortSeg .pill').forEach(p=>p.classList.toggle('pill--on',p===b)); render(); });
+  const drawer=document.getElementById('drawer');
+  document.getElementById('openFilters').addEventListener('click', ()=>{ drawer.classList.add('show'); });
+  document.getElementById('closeDrawer').addEventListener('click', ()=>drawer.classList.remove('show'));
+  document.getElementById('drawerScrim').addEventListener('click', ()=>drawer.classList.remove('show'));
+
+  /* ===================== INIT (with loading skeleton) ===================== */
+  function skeleton(){ document.getElementById('results').innerHTML=Array(4).fill(0).map(()=>`<div class="qcard"><div class="qbody"><div class="flex gap-3"><div class="sk w-11 h-11 rounded-control"></div><div class="flex-1 space-y-2"><div class="sk h-4 w-40"></div><div class="sk h-3 w-24"></div></div><div class="sk h-7 w-24"></div></div><div class="sk h-3 w-full mt-4"></div><div class="sk h-3 w-2/3 mt-2"></div></div></div>`).join(''); refresh(); }
+  mountFilters(); skeleton();
+  setTimeout(()=>{ render(); updateCmpBar(); }, 750);
+</script>
+</body>
+</html>
