@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Air Export Request / Booking — Theme Preview · Cargostar</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = { important:true, theme:{ extend:{
+    colors:{ brand:{DEFAULT:'#2A3E8A',50:'#EEF2FA',100:'#E9EDF7',600:'#2A3E8A',700:'#22336f'},
+             brandgreen:{DEFAULT:'#78B947'}, ok:'#10b981',info:'#3b82f6',warn:'#f59e0b',err:'#ef4444',
+             ink:'#0f172a',muted:'#64748b' },
+    borderRadius:{ card:'1rem',control:'.75rem',pill:'9999px' },
+    boxShadow:{ card:'0 1px 2px rgba(2,6,23,.06)','card-hover':'0 6px 16px rgba(2,6,23,.08)',pop:'0 8px 24px rgba(2,6,23,.10)' }
+  }}}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+  :root{
+    --brand-primary:#2A3E8A; --brand-secondary:#78B947; --accent-yellow:#EDDA66; --accent-rose:#f43f5e;
+    --ok:#10b981; --info:#3b82f6; --warn:#f59e0b; --err:#ef4444;
+    --ink:#0f172a; --muted:#64748b; --border:#e2e8f0; --panel:#ffffff;
+    --surface-subtle:#f8fafc; --surface-2:#f1f5f9; --brand-50:#EEF2FA; --brand-100:#E9EDF7;
+    --focus-ring:rgba(42,62,138,.35);
+    --shadow-card:0 1px 2px rgba(2,6,23,.06); --shadow-card-hover:0 6px 16px rgba(2,6,23,.08); --shadow-pop:0 8px 24px rgba(2,6,23,.10);
+    --r-card:1rem; --r-control:.75rem; --r-control-sm:.625rem; --r-pill:9999px;
+  }
+  *{ font-family:'Roboto',system-ui,sans-serif; box-sizing:border-box; }
+  body{ background:var(--surface-subtle); color:var(--ink); margin:0; }
+  h1,h2,h3,h4,.font-head{ font-family:'Poppins',sans-serif; }
+
+  /* ---- primitives ---- */
+  .card{ background:var(--panel); border:1px solid var(--border); border-radius:var(--r-card); box-shadow:var(--shadow-card); transition:box-shadow .15s, transform .15s; }
+  .card--accent{ position:relative; overflow:hidden; }
+  .card--accent::before{ content:""; position:absolute; inset:0 0 auto 0; height:4px; background:linear-gradient(90deg,var(--brand-primary),#4257b2); }
+  .section-title{ font-weight:700; color:var(--ink); font-size:.98rem; }
+  .ico{ width:34px; height:34px; border-radius:10px; background:var(--brand-50); color:var(--brand-primary); display:inline-flex; align-items:center; justify-content:center; flex:none; }
+  .eyebrow{ font-size:11px; text-transform:uppercase; letter-spacing:.06em; font-weight:700; color:var(--muted); display:block; margin-bottom:.3rem; }
+
+  .input, .select, textarea.input{ width:100%; border:1px solid var(--border); border-radius:var(--r-control); padding:.55rem .7rem; font-size:.875rem; color:var(--ink); background:#fff; transition:border-color .15s, box-shadow .15s; }
+  .input::placeholder{ color:#94a3b8; }
+  .input:focus,.select:focus,textarea.input:focus{ outline:none; border-color:var(--brand-primary); box-shadow:0 0 0 3px var(--focus-ring); }
+  .input.is-ok{ border-color:var(--ok); }
+  .input.is-err{ border-color:var(--err); }
+  .field-error{ color:var(--err); font-size:.72rem; margin-top:.25rem; display:flex; align-items:center; gap:.25rem; }
+
+  .btn{ display:inline-flex; align-items:center; gap:.5rem; border-radius:var(--r-control); font-weight:600; transition:.15s; cursor:pointer; border:1px solid transparent; padding:.6rem 1rem; font-size:.875rem; }
+  .btn-sm{ padding:.35rem .65rem; font-size:.78rem; border-radius:var(--r-control-sm); }
+  .btn-primary{ background:var(--brand-primary); color:#fff; }
+  .btn-primary:hover{ background:#22336f; }
+  .btn-primary:disabled{ opacity:.45; cursor:not-allowed; }
+  .btn-secondary{ background:var(--brand-secondary); color:#fff; }
+  .btn-secondary:hover{ filter:brightness(.95); }
+  .btn-ghost{ background:#fff; border:1px solid var(--border); color:var(--ink); }
+  .btn-ghost:hover{ background:var(--surface-subtle); }
+  .btn-soft-primary{ background:var(--brand-50); color:var(--brand-primary); }
+  .btn-soft-primary:hover{ background:var(--brand-100); }
+
+  .pill{ display:inline-flex; align-items:center; gap:.4rem; border:1px solid var(--border); border-radius:var(--r-pill); padding:.42rem .85rem; background:#fff; cursor:pointer; font-size:.82rem; font-weight:500; transition:.15s; }
+  .pill:hover{ background:var(--surface-subtle); }
+  .pill--on{ background:var(--brand-50); border-color:var(--brand-primary); color:var(--brand-primary); font-weight:600; }
+
+  .badge{ display:inline-flex; align-items:center; gap:.35rem; border-radius:var(--r-pill); padding:.22rem .6rem; font-size:.7rem; font-weight:700; }
+  .badge--ok{ background:#ecfdf5; color:#047857; }
+  .badge--warn{ background:#fffbeb; color:#b45309; }
+  .badge--info{ background:var(--brand-50); color:var(--brand-primary); }
+  .badge--slate{ background:var(--surface-2); color:var(--muted); }
+  .badge--err{ background:#fef2f2; color:#b91c1c; }
+
+  .chip{ display:inline-flex; align-items:center; gap:.35rem; border-radius:var(--r-pill); padding:.25rem .65rem; font-size:.76rem; font-weight:600; background:var(--surface-2); color:var(--ink); }
+  .chip--brand{ background:var(--brand-50); color:var(--brand-primary); }
+
+  .kv{ display:grid; grid-template-columns:1fr auto; gap:.55rem .75rem; font-size:.84rem; }
+  .kv dt{ color:var(--muted); }
+  .kv dd{ margin:0; font-weight:600; text-align:right; }
+
+  /* stepper */
+  .stepper{ display:flex; align-items:center; gap:0; flex-wrap:wrap; }
+  .step{ display:flex; align-items:center; gap:.5rem; font-size:.8rem; color:var(--muted); }
+  .step .dot{ width:24px; height:24px; border-radius:50%; border:2px solid var(--border); display:inline-flex; align-items:center; justify-content:center; font-size:.7rem; font-weight:700; background:#fff; color:var(--muted); flex:none; }
+  .step.is-done .dot{ background:var(--ok); border-color:var(--ok); color:#fff; }
+  .step.is-active .dot{ background:var(--brand-primary); border-color:var(--brand-primary); color:#fff; }
+  .step.is-active{ color:var(--ink); font-weight:600; }
+  .step .line{ width:34px; height:2px; background:var(--border); margin:0 .5rem; }
+  .step.is-done .line{ background:var(--ok); }
+
+  /* progress bars */
+  .bar{ height:8px; border-radius:var(--r-pill); background:var(--surface-2); overflow:hidden; }
+  .bar > span{ display:block; height:100%; background:linear-gradient(90deg,var(--brand-primary),#4257b2); border-radius:var(--r-pill); transition:width .4s; }
+
+  /* upload tiles */
+  .dropzone{ border:1.5px dashed var(--border); border-radius:var(--r-control); padding:.85rem; text-align:center; font-size:.78rem; color:var(--muted); background:var(--surface-subtle); transition:.15s; }
+  .dropzone--done{ border-style:solid; border-color:var(--ok); background:#f0fdf4; color:#047857; text-align:left; }
+  .dropzone--req{ border-color:#fca5a5; background:#fef2f2; color:#b91c1c; }
+
+  .copilot-row{ display:flex; gap:.55rem; align-items:flex-start; font-size:.82rem; padding:.4rem 0; border-bottom:1px dashed var(--border); }
+  .copilot-row:last-child{ border-bottom:0; }
+  .copilot-ico{ flex:none; margin-top:1px; }
+
+  /* table */
+  table.pieces{ width:100%; border-collapse:collapse; font-size:.82rem; }
+  table.pieces th{ text-align:left; font-size:.68rem; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); padding:.4rem .5rem; border-bottom:1px solid var(--border); }
+  table.pieces td{ padding:.4rem .5rem; border-bottom:1px solid var(--surface-2); }
+  table.pieces input{ width:100%; border:1px solid var(--border); border-radius:.5rem; padding:.35rem .4rem; font-size:.82rem; }
+  table.pieces input:focus{ outline:none; border-color:var(--brand-primary); box-shadow:0 0 0 2px var(--focus-ring); }
+
+  .collapsed .card-body{ display:none; }
+  .chevron{ transition:transform .2s; }
+  .collapsed .chevron{ transform:rotate(-90deg); }
+
+  .conditional{ display:none; }
+  .conditional.show{ display:block; }
+
+  .sticky-bar{ position:sticky; bottom:0; z-index:30; }
+  @media (min-width:1024px){ .sidebar{ position:sticky; top:84px; align-self:start; } }
+
+  .demo-banner{ background:linear-gradient(90deg,#1e2f6b,#2A3E8A 55%,#3a4fa0); color:#fff; }
+  .swatch{ height:46px; border-radius:10px; border:1px solid rgba(0,0,0,.06); }
+  .skeleton{ background:linear-gradient(90deg,#eef2f7 25%,#e2e8f0 37%,#eef2f7 63%); background-size:400% 100%; animation:sh 1.4s ease infinite; border-radius:6px; }
+  @keyframes sh{ 0%{background-position:100% 50%} 100%{background-position:0 50%} }
+</style>
+</head>
+<body>
+
+<!-- ============ DEMO / APPROVAL BANNER ============ -->
+<div class="demo-banner">
+  <div class="max-w-7xl mx-auto px-4 py-2 flex items-center justify-between gap-3 flex-wrap text-sm">
+    <div class="flex items-center gap-2">
+      <i data-lucide="palette" style="width:16px;height:16px"></i>
+      <span class="font-semibold">Theme Preview — Air Export Request / Booking</span>
+      <span class="opacity-80 hidden sm:inline">· for stakeholder approval · not production</span>
+    </div>
+    <div class="flex items-center gap-3 text-xs opacity-90">
+      <span class="hidden md:inline">Design system: indigo #2A3E8A · Poppins/Roboto · Lucide</span>
+      <button onclick="document.getElementById('tokens').scrollIntoView({behavior:'smooth'})" class="underline">View tokens ↓</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ APP TOP BAR (mock) ============ -->
+<header class="bg-white border-b border-[var(--border)]">
+  <div class="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between">
+    <div class="flex items-center gap-2 font-head font-bold text-brand text-lg">
+      <span class="inline-flex w-8 h-8 rounded-lg bg-brand text-white items-center justify-center"><i data-lucide="boxes" style="width:18px;height:18px"></i></span>
+      Cargostar
+    </div>
+    <nav class="hidden md:flex items-center gap-6 text-sm text-muted">
+      <span>Dashboard</span><span class="text-ink font-semibold">Requests</span><span>Shipments</span><span>Quotes</span>
+    </nav>
+    <div class="flex items-center gap-3">
+      <span class="w-8 h-8 rounded-full bg-[var(--surface-2)] inline-flex items-center justify-center"><i data-lucide="bell" style="width:16px;height:16px"></i></span>
+      <span class="w-8 h-8 rounded-full bg-brand text-white inline-flex items-center justify-center text-xs font-bold">RK</span>
+    </div>
+  </div>
+</header>
+
+<!-- ============ PAGE HEADER ============ -->
+<div class="max-w-7xl mx-auto px-4 pt-5">
+  <div class="text-xs text-muted mb-2 flex items-center gap-1">
+    <span>Dashboard</span><i data-lucide="chevron-right" style="width:13px;height:13px"></i>
+    <span>Requests</span><i data-lucide="chevron-right" style="width:13px;height:13px"></i>
+    <span class="text-ink font-medium">New</span>
+  </div>
+  <div class="flex items-start justify-between gap-4 flex-wrap">
+    <div class="flex items-start gap-3">
+      <span class="ico" style="width:44px;height:44px;border-radius:12px"><i data-lucide="plane" style="width:22px;height:22px"></i></span>
+      <div>
+        <h1 class="text-xl font-bold leading-tight">Air Export Request</h1>
+        <p class="text-sm text-muted">Create a request, get a quote, submit a booking.</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-2 flex-wrap">
+      <span class="badge badge--slate"><i data-lucide="circle" style="width:11px;height:11px"></i> Draft</span>
+      <span class="text-xs text-muted hidden sm:flex items-center gap-1"><i data-lucide="check" style="width:13px;height:13px"></i> Saved 14:08</span>
+      <button class="btn btn-ghost btn-sm"><i data-lucide="save" style="width:15px;height:15px"></i> Save draft</button>
+      <button class="btn btn-ghost btn-sm" style="padding:.35rem .55rem"><i data-lucide="more-horizontal" style="width:16px;height:16px"></i></button>
+    </div>
+  </div>
+
+  <!-- mode toggle + stepper -->
+  <div class="flex items-center justify-between gap-4 flex-wrap mt-4">
+    <div class="stepper">
+      <div class="step is-done"><span class="dot"><i data-lucide="check" style="width:13px;height:13px"></i></span><span>Shipment</span><span class="line"></span></div>
+      <div class="step is-done"><span class="dot"><i data-lucide="check" style="width:13px;height:13px"></i></span><span>Route</span><span class="line"></span></div>
+      <div class="step is-active"><span class="dot">3</span><span>Cargo</span><span class="line"></span></div>
+      <div class="step"><span class="dot">4</span><span>Parties</span><span class="line"></span></div>
+      <div class="step"><span class="dot">5</span><span class="hidden sm:inline">Requirements</span><span class="sm:hidden">Req.</span><span class="line"></span></div>
+      <div class="step"><span class="dot">6</span><span>Documents</span></div>
+    </div>
+    <div class="inline-flex p-1 rounded-pill bg-white border border-[var(--border)]">
+      <button id="modeRate" onclick="setMode('rate')" class="pill pill--on" style="border:0">Request a rate</button>
+      <button id="modeBook" onclick="setMode('book')" class="pill" style="border:0">Create booking</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ BODY GRID ============ -->
+<main class="max-w-7xl mx-auto px-4 py-5 grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+  <!-- ---------------- FORM COLUMN ---------------- -->
+  <section class="lg:col-span-8 space-y-6">
+
+    <!-- 1. SHIPMENT -->
+    <article class="card card--accent" id="card-shipment">
+      <div class="card-head flex items-center gap-3 p-5 pb-3 cursor-pointer" onclick="toggleCard('card-shipment')">
+        <span class="ico"><i data-lucide="package" style="width:18px;height:18px"></i></span>
+        <div class="flex-1"><h2 class="section-title">Shipment Information</h2></div>
+        <span class="badge badge--ok"><i data-lucide="check" style="width:11px;height:11px"></i> Complete</span>
+        <i data-lucide="chevron-down" class="chevron text-muted" style="width:18px;height:18px"></i>
+      </div>
+      <div class="card-body px-5 pb-5 grid sm:grid-cols-2 gap-4">
+        <div><label class="eyebrow">Shipment type *</label>
+          <select class="select"><option>Air Export</option></select></div>
+        <div><label class="eyebrow">Movement type *</label>
+          <select class="select"><option>Loose</option><option>Palletised</option><option>ULD (build-up)</option></select></div>
+        <div class="sm:col-span-2"><label class="eyebrow">Service type *</label>
+          <div class="flex gap-2 flex-wrap">
+            <button class="pill" onclick="pickService(this,'aa')">Airport → Airport</button>
+            <button class="pill pill--on" onclick="pickService(this,'dd')">Door → Door</button>
+            <button class="pill" onclick="pickService(this,'da')">Door → Airport</button>
+            <button class="pill" onclick="pickService(this,'ad')">Airport → Door</button>
+          </div></div>
+        <div><label class="eyebrow">Incoterm *</label>
+          <select class="select"><option>FCA — Free Carrier</option><option>EXW</option><option>CPT</option><option>CIP</option><option>DAP</option><option>DDP</option></select></div>
+        <div><label class="eyebrow">Commodity type *</label>
+          <select class="select" onchange="commodityHint(this)"><option>General cargo</option><option>Perishables</option><option>Pharma / Healthcare</option><option>Dangerous goods</option><option>Electronics</option></select></div>
+        <div class="sm:col-span-2"><label class="eyebrow">Cargo description</label>
+          <textarea class="input" rows="2" placeholder="e.g. 12 cartons electronic components, palletised"></textarea></div>
+      </div>
+    </article>
+
+    <!-- 2. ROUTE -->
+    <article class="card card--accent" id="card-route">
+      <div class="card-head flex items-center gap-3 p-5 pb-3 cursor-pointer" onclick="toggleCard('card-route')">
+        <span class="ico"><i data-lucide="route" style="width:18px;height:18px"></i></span>
+        <div class="flex-1"><h2 class="section-title">Route Information</h2></div>
+        <span class="badge badge--ok"><i data-lucide="check" style="width:11px;height:11px"></i> Complete</span>
+        <i data-lucide="chevron-down" class="chevron text-muted" style="width:18px;height:18px"></i>
+      </div>
+      <div class="card-body px-5 pb-5">
+        <div class="grid sm:grid-cols-2 gap-4">
+          <div><label class="eyebrow">Origin airport *</label>
+            <div class="relative"><input class="input is-ok" value="JFK · New York JFK Intl"><i data-lucide="plane-takeoff" class="text-muted" style="position:absolute;right:10px;top:9px;width:16px;height:16px"></i></div></div>
+          <div><label class="eyebrow">Destination airport *</label>
+            <div class="relative"><input class="input is-ok" value="FRA · Frankfurt am Main"><i data-lucide="plane-landing" class="text-muted" style="position:absolute;right:10px;top:9px;width:16px;height:16px"></i></div></div>
+        </div>
+        <div class="my-4 flex items-center justify-center gap-3 text-brand text-sm font-semibold">
+          <span class="chip chip--brand">JFK</span>
+          <span class="flex-1 border-t border-dashed border-[var(--brand-primary)] max-w-[160px]"></span>
+          <i data-lucide="plane" style="width:18px;height:18px"></i>
+          <span class="flex-1 border-t border-dashed border-[var(--brand-primary)] max-w-[160px]"></span>
+          <span class="chip chip--brand">FRA</span>
+        </div>
+        <div class="grid sm:grid-cols-2 gap-4">
+          <div class="rounded-control border border-[var(--border)] p-3">
+            <div class="eyebrow flex items-center gap-1"><i data-lucide="warehouse" style="width:13px;height:13px"></i> Pickup (Door)</div>
+            <input class="input mb-2" placeholder="Street address" value="21 Hudson Yards">
+            <div class="grid grid-cols-2 gap-2"><input class="input" placeholder="City" value="New York"><input class="input" placeholder="ZIP" value="10001"></div>
+            <label class="eyebrow mt-2">Ready date</label><input type="date" class="input" value="2026-06-03">
+          </div>
+          <div class="rounded-control border border-[var(--border)] p-3">
+            <div class="eyebrow flex items-center gap-1"><i data-lucide="map-pin" style="width:13px;height:13px"></i> Delivery (Door)</div>
+            <input class="input mb-2" placeholder="Street address" value="Hanauer Landstraße 12">
+            <div class="grid grid-cols-2 gap-2"><input class="input" placeholder="City" value="Frankfurt"><input class="input" placeholder="ZIP" value="60314"></div>
+            <label class="eyebrow mt-2">Delivery notes</label><input class="input" placeholder="dock 4, 08–16h">
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <!-- 3. CARGO -->
+    <article class="card card--accent" id="card-cargo">
+      <div class="card-head flex items-center gap-3 p-5 pb-3 cursor-pointer" onclick="toggleCard('card-cargo')">
+        <span class="ico"><i data-lucide="boxes" style="width:18px;height:18px"></i></span>
+        <div class="flex-1"><h2 class="section-title">Cargo Information</h2></div>
+        <span class="badge badge--info"><i data-lucide="calculator" style="width:11px;height:11px"></i> Live</span>
+        <i data-lucide="chevron-down" class="chevron text-muted" style="width:18px;height:18px"></i>
+      </div>
+      <div class="card-body px-5 pb-5">
+        <div class="overflow-x-auto">
+          <table class="pieces" id="piecesTable">
+            <thead><tr><th>#</th><th>Qty</th><th>L cm</th><th>W cm</th><th>H cm</th><th>Wt/pc kg</th><th>Package</th><th class="text-right">Vol m³</th><th></th></tr></thead>
+            <tbody>
+              <tr><td>1</td><td><input type="number" value="10" oninput="recalc()"></td><td><input type="number" value="120" oninput="recalc()"></td><td><input type="number" value="80" oninput="recalc()"></td><td><input type="number" value="100" oninput="recalc()"></td><td><input type="number" value="60" oninput="recalc()"></td>
+                <td><select class="input" style="width:auto"><option>Pallet</option><option>Carton</option><option>Crate</option></select></td>
+                <td class="text-right cell-vol">9.60</td><td><button onclick="delRow(this)" class="text-muted"><i data-lucide="x" style="width:14px;height:14px"></i></button></td></tr>
+              <tr><td>2</td><td><input type="number" value="2" oninput="recalc()"></td><td><input type="number" value="60" oninput="recalc()"></td><td><input type="number" value="40" oninput="recalc()"></td><td><input type="number" value="50" oninput="recalc()"></td><td><input type="number" value="30" oninput="recalc()"></td>
+                <td><select class="input" style="width:auto"><option>Carton</option><option>Pallet</option><option>Crate</option></select></td>
+                <td class="text-right cell-vol">0.24</td><td><button onclick="delRow(this)" class="text-muted"><i data-lucide="x" style="width:14px;height:14px"></i></button></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <button onclick="addRow()" class="btn btn-soft-primary btn-sm mt-3"><i data-lucide="plus" style="width:15px;height:15px"></i> Add line</button>
+
+        <div class="mt-4 rounded-control bg-[var(--surface-subtle)] border border-[var(--border)] p-4">
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center mb-3">
+            <div><div class="eyebrow">Pieces</div><div class="font-head font-bold text-lg" id="tPieces">12</div></div>
+            <div><div class="eyebrow">Gross</div><div class="font-head font-bold text-lg" id="tGross">840 kg</div></div>
+            <div><div class="eyebrow">Volume</div><div class="font-head font-bold text-lg" id="tVol">9.84 m³</div></div>
+            <div><div class="eyebrow">Volumetric</div><div class="font-head font-bold text-lg" id="tVolw">1640 kg</div></div>
+          </div>
+          <div class="flex items-center justify-between bg-white rounded-control border border-[var(--brand-100)] px-4 py-3">
+            <div class="flex items-center gap-2"><span class="eyebrow" style="margin:0">Chargeable weight</span>
+              <span class="text-muted" title="max(gross, volumetric · IATA 1:6000)"><i data-lucide="info" style="width:14px;height:14px"></i></span></div>
+            <div class="font-head font-bold text-2xl text-brand" id="tChg">1640 kg</div>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <!-- 4. PARTIES -->
+    <div class="grid md:grid-cols-2 gap-6">
+      <article class="card" id="card-shipper">
+        <div class="flex items-center gap-3 p-5 pb-3">
+          <span class="ico"><i data-lucide="building-2" style="width:18px;height:18px"></i></span>
+          <div class="flex-1"><h2 class="section-title">Shipper</h2></div>
+          <span class="badge badge--ok"><i data-lucide="check" style="width:11px;height:11px"></i></span>
+        </div>
+        <div class="px-5 pb-5 space-y-3">
+          <div><label class="eyebrow">Company *</label><input class="input" value="Acme Components LLC"></div>
+          <div><label class="eyebrow">Contact person</label><input class="input" value="Dana Wright"></div>
+          <div><label class="eyebrow">Email *</label><input class="input is-ok" value="dana@acme.com"></div>
+          <div><label class="eyebrow">Phone</label><input class="input" value="+1 212 555 0148"></div>
+        </div>
+      </article>
+      <article class="card" id="card-consignee">
+        <div class="flex items-center gap-3 p-5 pb-3">
+          <span class="ico"><i data-lucide="building" style="width:18px;height:18px"></i></span>
+          <div class="flex-1"><h2 class="section-title">Consignee</h2></div>
+          <span class="badge badge--warn"><i data-lucide="alert-triangle" style="width:11px;height:11px"></i> Email</span>
+        </div>
+        <div class="px-5 pb-5 space-y-3">
+          <div><label class="eyebrow">Company *</label><input class="input" value="Rheinwerk GmbH"></div>
+          <div><label class="eyebrow">Contact person</label><input class="input" value="Lukas Bauer"></div>
+          <div><label class="eyebrow">Email *</label><input class="input is-err" placeholder="required"><div class="field-error"><i data-lucide="alert-triangle" style="width:12px;height:12px"></i> Consignee email is required</div></div>
+          <div><label class="eyebrow">Phone</label><input class="input" value="+49 69 1200 88"></div>
+        </div>
+      </article>
+    </div>
+
+    <!-- 5. SPECIAL REQUIREMENTS -->
+    <article class="card" id="card-special">
+      <div class="flex items-center gap-3 p-5 pb-3">
+        <span class="ico"><i data-lucide="sliders-horizontal" style="width:18px;height:18px"></i></span>
+        <div class="flex-1"><h2 class="section-title">Special Requirements</h2></div>
+      </div>
+      <div class="px-5 pb-5">
+        <div class="flex gap-2 flex-wrap">
+          <button class="pill" onclick="toggleReq(this,'dg')"><i data-lucide="flame" style="width:14px;height:14px"></i> Dangerous goods</button>
+          <button class="pill" onclick="toggleReq(this,'temp')"><i data-lucide="snowflake" style="width:14px;height:14px"></i> Temp-controlled</button>
+          <button class="pill" onclick="toggleReq(this,null)"><i data-lucide="zap" style="width:14px;height:14px"></i> Express</button>
+          <button class="pill" onclick="toggleReq(this,null)"><i data-lucide="maximize" style="width:14px;height:14px"></i> Oversized</button>
+          <button class="pill" onclick="toggleReq(this,'ins')"><i data-lucide="shield" style="width:14px;height:14px"></i> Insurance</button>
+          <button class="pill" onclick="toggleReq(this,null)"><i data-lucide="layers" style="width:14px;height:14px"></i> Stackable</button>
+        </div>
+        <div id="panel-dg" class="conditional mt-4 rounded-control border border-[var(--border)] p-4">
+          <div class="eyebrow flex items-center gap-1 text-[var(--err)]"><i data-lucide="flame" style="width:13px;height:13px"></i> Dangerous goods details</div>
+          <div class="grid sm:grid-cols-4 gap-3 mt-1">
+            <div><label class="eyebrow">UN number *</label><input class="input" placeholder="UN1263"></div>
+            <div><label class="eyebrow">Class *</label><select class="select"><option>3</option><option>1</option><option>9</option></select></div>
+            <div><label class="eyebrow">Packing grp</label><select class="select"><option>II</option><option>I</option><option>III</option></select></div>
+            <div><label class="eyebrow">Proper name *</label><input class="input" placeholder="Paint"></div>
+          </div>
+          <p class="field-error mt-2"><i data-lucide="alert-triangle" style="width:12px;height:12px"></i> MSDS document becomes required.</p>
+        </div>
+        <div id="panel-temp" class="conditional mt-4 rounded-control border border-[var(--border)] p-4">
+          <div class="eyebrow flex items-center gap-1 text-info"><i data-lucide="snowflake" style="width:13px;height:13px"></i> Temperature range</div>
+          <div class="flex items-center gap-2 mt-1"><input class="input" style="width:90px" value="+2°C"><span class="text-muted">to</span><input class="input" style="width:90px" value="+8°C">
+            <select class="select" style="width:auto"><option>Passive</option><option>Active</option></select></div>
+        </div>
+        <div id="panel-ins" class="conditional mt-4 rounded-control border border-[var(--border)] p-4">
+          <div class="eyebrow flex items-center gap-1"><i data-lucide="shield" style="width:13px;height:13px"></i> Insurance</div>
+          <div class="flex items-center gap-2 mt-1"><input class="input" placeholder="Insured value" style="width:160px"><select class="select" style="width:auto"><option>USD</option><option>EUR</option></select></div>
+        </div>
+      </div>
+    </article>
+
+    <!-- 6. DOCUMENTS -->
+    <article class="card" id="card-docs">
+      <div class="flex items-center gap-3 p-5 pb-3">
+        <span class="ico"><i data-lucide="file-text" style="width:18px;height:18px"></i></span>
+        <div class="flex-1"><h2 class="section-title">Document Upload</h2></div>
+        <span class="badge badge--slate">2 of 4</span>
+      </div>
+      <div class="px-5 pb-5 grid sm:grid-cols-2 gap-3">
+        <div class="dropzone dropzone--done"><div class="flex items-center gap-2"><i data-lucide="file-check" style="width:16px;height:16px"></i><div><div class="font-semibold">Commercial invoice</div><div class="text-xs">invoice_889.pdf · 1.2 MB</div></div></div></div>
+        <div class="dropzone"><i data-lucide="upload-cloud" style="width:18px;height:18px"></i><div class="font-semibold text-ink mt-1">Packing list *</div><div>Drag & drop · PDF/JPG/PNG ≤10MB</div></div>
+        <div class="dropzone"><i data-lucide="upload-cloud" style="width:18px;height:18px"></i><div class="font-semibold text-ink mt-1">Certificate of origin</div><div>Optional</div></div>
+        <div class="dropzone dropzone--req"><div class="flex items-center gap-2"><i data-lucide="alert-triangle" style="width:16px;height:16px"></i><div><div class="font-semibold">MSDS</div><div class="text-xs">Required when Dangerous goods on</div></div></div></div>
+      </div>
+    </article>
+  </section>
+
+  <!-- ---------------- SIDEBAR ---------------- -->
+  <aside class="lg:col-span-4 sidebar space-y-6">
+
+    <!-- Cargo Copilot -->
+    <article class="card card--accent">
+      <div class="flex items-center gap-2 p-4 pb-2">
+        <span class="ico"><i data-lucide="sparkles" style="width:18px;height:18px"></i></span>
+        <div><h3 class="section-title">Cargo Copilot</h3><div class="text-xs text-muted">Powered by your shipment data · live</div></div>
+      </div>
+      <div class="px-4 pb-4">
+        <div class="eyebrow mt-1">Validate</div>
+        <div class="copilot-row"><i data-lucide="check-circle-2" class="copilot-ico" style="color:var(--ok);width:16px;height:16px"></i><span>JFK → FRA is a serviceable air lane.</span></div>
+        <div class="copilot-row"><i data-lucide="x-circle" class="copilot-ico" style="color:var(--err);width:16px;height:16px"></i><span class="flex-1">Consignee email missing.</span><button class="btn btn-soft-primary btn-sm">Fix</button></div>
+        <div class="copilot-row"><i data-lucide="alert-triangle" class="copilot-ico" style="color:var(--warn);width:16px;height:16px"></i><span class="flex-1">Description “samples” may delay customs.</span><button class="btn btn-soft-primary btn-sm">Improve</button></div>
+
+        <div class="eyebrow mt-3">Complete</div>
+        <div class="copilot-row"><i data-lucide="lightbulb" class="copilot-ico" style="color:var(--brand-primary);width:16px;height:16px"></i><span class="flex-1">Add HS code for faster clearance.</span><button class="btn btn-soft-primary btn-sm">Add</button></div>
+
+        <div class="eyebrow mt-3">Suggest</div>
+        <div class="copilot-row"><i data-lucide="sparkles" class="copilot-ico" style="color:var(--brand-primary);width:16px;height:16px"></i><span class="flex-1">Pharma + 2–8°C → enable Temp-controlled.</span><button class="btn btn-soft-primary btn-sm">Apply</button></div>
+        <div class="copilot-row"><i data-lucide="alert-triangle" class="copilot-ico" style="color:var(--warn);width:16px;height:16px"></i><span>Risk: DG class 3 needs MSDS + DGR check.</span></div>
+
+        <div class="flex gap-2 mt-3">
+          <button class="btn btn-primary btn-sm flex-1 justify-center"><i data-lucide="wand-2" style="width:14px;height:14px"></i> Apply all safe</button>
+          <button class="btn btn-ghost btn-sm">Dismiss</button>
+        </div>
+      </div>
+    </article>
+
+    <!-- Shipment summary -->
+    <article class="card">
+      <div class="p-4 pb-2"><h3 class="section-title">Shipment summary</h3></div>
+      <div class="px-4 pb-4">
+        <dl class="kv">
+          <dt>Route</dt><dd>JFK → FRA</dd>
+          <dt>Service</dt><dd>Door → Door</dd>
+          <dt>Pieces</dt><dd id="sPieces">12</dd>
+          <dt>Gross</dt><dd id="sGross">840 kg</dd>
+          <dt>Volume</dt><dd id="sVol">9.84 m³</dd>
+          <dt>Chargeable</dt><dd class="text-brand" id="sChg">1640 kg</dd>
+        </dl>
+      </div>
+    </article>
+
+    <!-- Estimated price -->
+    <article class="card">
+      <div class="p-4 pb-2 flex items-center justify-between"><h3 class="section-title">Estimated price</h3><span class="chip">indicative</span></div>
+      <div class="px-4 pb-4">
+        <div class="font-head font-bold text-2xl text-ink">$ 4,180 <span class="text-muted font-normal text-lg">– $ 5,020</span></div>
+        <div class="text-xs text-muted mb-3">all-in air · pickup + freight + fuel/security</div>
+        <button class="btn btn-ghost btn-sm w-full justify-center"><i data-lucide="receipt" style="width:14px;height:14px"></i> See breakdown</button>
+      </div>
+    </article>
+
+    <!-- Completeness -->
+    <article class="card">
+      <div class="p-4 pb-2 flex items-center justify-between"><h3 class="section-title">Completeness</h3><span class="text-sm font-bold text-brand">72%</span></div>
+      <div class="px-4 pb-4">
+        <div class="bar mb-3"><span style="width:72%"></span></div>
+        <div class="text-xs text-muted mb-2">3 required fields left</div>
+        <ul class="text-sm space-y-1">
+          <li class="flex items-center gap-2 text-ink"><i data-lucide="circle-dot" style="width:14px;height:14px;color:var(--warn)"></i> Consignee email</li>
+          <li class="flex items-center gap-2 text-ink"><i data-lucide="circle-dot" style="width:14px;height:14px;color:var(--warn)"></i> MSDS (DG on)</li>
+          <li class="flex items-center gap-2 text-ink"><i data-lucide="circle-dot" style="width:14px;height:14px;color:var(--warn)"></i> Packing list</li>
+        </ul>
+      </div>
+    </article>
+  </aside>
+</main>
+
+<!-- ============ STICKY SUBMIT BAR ============ -->
+<div class="sticky-bar bg-white border-t border-[var(--border)] shadow-pop">
+  <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-3 flex-wrap">
+    <div class="flex items-center gap-2 text-sm text-[var(--warn)] font-medium"><i data-lucide="alert-triangle" style="width:16px;height:16px"></i> 3 fields need attention</div>
+    <div class="flex items-center gap-2 flex-wrap">
+      <button class="btn btn-secondary"><i data-lucide="save" style="width:16px;height:16px"></i> Save draft</button>
+      <button class="btn btn-soft-primary"><i data-lucide="badge-dollar-sign" style="width:16px;height:16px"></i> Request quote</button>
+      <button class="btn btn-primary" disabled>Create booking <i data-lucide="arrow-right" style="width:16px;height:16px"></i></button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ TOKEN / THEME APPENDIX (for approval) ============ -->
+<section id="tokens" class="max-w-7xl mx-auto px-4 py-10">
+  <h2 class="font-head text-lg font-bold mb-1">Theme tokens used on this page</h2>
+  <p class="text-sm text-muted mb-5">Every surface above uses only these design-system tokens — for sign-off against <code>02-design-system.md</code>.</p>
+
+  <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="card p-4">
+      <div class="eyebrow mb-2">Brand & action</div>
+      <div class="space-y-2 text-xs">
+        <div><div class="swatch" style="background:#2A3E8A"></div>brand-primary #2A3E8A</div>
+        <div><div class="swatch" style="background:#78B947"></div>brand-secondary #78B947</div>
+        <div><div class="swatch" style="background:#EEF2FA"></div>brand-50 #EEF2FA</div>
+      </div>
+    </div>
+    <div class="card p-4">
+      <div class="eyebrow mb-2">Semantic status</div>
+      <div class="space-y-2 text-xs">
+        <div><div class="swatch" style="background:#10b981"></div>ok #10b981</div>
+        <div><div class="swatch" style="background:#3b82f6"></div>info #3b82f6</div>
+        <div><div class="swatch" style="background:#f59e0b"></div>warn #f59e0b</div>
+        <div><div class="swatch" style="background:#ef4444"></div>err #ef4444</div>
+      </div>
+    </div>
+    <div class="card p-4">
+      <div class="eyebrow mb-2">Neutrals</div>
+      <div class="space-y-2 text-xs">
+        <div><div class="swatch" style="background:#0f172a"></div>ink #0f172a</div>
+        <div><div class="swatch" style="background:#64748b"></div>muted #64748b</div>
+        <div><div class="swatch" style="background:#e2e8f0"></div>border #e2e8f0</div>
+        <div><div class="swatch" style="background:#f8fafc;border:1px solid #e2e8f0"></div>surface #f8fafc</div>
+      </div>
+    </div>
+    <div class="card p-4">
+      <div class="eyebrow mb-2">Type · radius · elevation</div>
+      <div class="text-xs space-y-2 text-muted">
+        <div><span class="font-head font-bold text-ink text-base">Poppins</span> — headings</div>
+        <div><span class="text-ink">Roboto</span> — body / UI</div>
+        <div class="eyebrow" style="margin:0">Eyebrow label idiom</div>
+        <div class="flex gap-2 pt-1"><span class="px-2 py-1 bg-white border border-[var(--border)]" style="border-radius:1rem">card 1rem</span><span class="px-2 py-1 bg-white border border-[var(--border)]" style="border-radius:.75rem">ctrl .75rem</span></div>
+        <div class="pt-1"><span class="px-2 py-1 bg-white" style="box-shadow:var(--shadow-card)">shadow-card</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card p-4 mt-4">
+    <div class="eyebrow mb-3">Component primitives shown above</div>
+    <div class="flex flex-wrap gap-2 items-center">
+      <button class="btn btn-primary btn-sm">.btn-primary</button>
+      <button class="btn btn-secondary btn-sm">.btn-secondary</button>
+      <button class="btn btn-soft-primary btn-sm">.btn-soft-primary</button>
+      <button class="btn btn-ghost btn-sm">.btn-ghost</button>
+      <span class="pill">.pill</span><span class="pill pill--on">.pill--on</span>
+      <span class="badge badge--ok"><i data-lucide="check" style="width:11px;height:11px"></i> .badge--ok</span>
+      <span class="badge badge--warn">.badge--warn</span>
+      <span class="badge badge--info">.badge--info</span>
+      <span class="chip chip--brand">.chip</span>
+    </div>
+  </div>
+
+  <p class="text-xs text-muted mt-6">Cargostar · Air Export theme preview · generated 2026-05-29 · companion to
+    <code>air-export-page-mockup.md</code>, <code>air-export-functional-specification.md</code>, <code>air-export-theme-compliance.md</code></p>
+</section>
+
+<script>
+  lucide.createIcons();
+
+  function toggleCard(id){ document.getElementById(id).classList.toggle('collapsed'); }
+
+  function setMode(m){
+    const r=document.getElementById('modeRate'), b=document.getElementById('modeBook');
+    if(m==='rate'){ r.classList.add('pill--on'); b.classList.remove('pill--on'); }
+    else { b.classList.add('pill--on'); r.classList.remove('pill--on'); }
+  }
+  function pickService(el,code){ el.parentElement.querySelectorAll('.pill').forEach(p=>p.classList.remove('pill--on')); el.classList.add('pill--on'); }
+  function commodityHint(sel){ /* visual only */ }
+
+  function toggleReq(el,panel){
+    el.classList.toggle('pill--on');
+    if(panel){ const p=document.getElementById('panel-'+panel); p.classList.toggle('show', el.classList.contains('pill--on')); }
+  }
+
+  function fmt(n,u){ return (Math.round(n*100)/100).toLocaleString('en-US')+' '+u; }
+  function recalc(){
+    let pieces=0, gross=0, vol=0;
+    document.querySelectorAll('#piecesTable tbody tr').forEach(tr=>{
+      const c=tr.querySelectorAll('input');
+      const qty=+c[0].value||0, L=+c[1].value||0, W=+c[2].value||0, H=+c[3].value||0, wt=+c[4].value||0;
+      const lineVol=L*W*H*qty/1e6;
+      tr.querySelector('.cell-vol').textContent=lineVol.toFixed(2);
+      pieces+=qty; gross+=wt*qty; vol+=lineVol;
+    });
+    const volw=vol*1e6/6000;          // IATA 1:6000
+    const chg=Math.max(gross,volw);
+    document.getElementById('tPieces').textContent=pieces;
+    document.getElementById('tGross').textContent=fmt(gross,'kg');
+    document.getElementById('tVol').textContent=fmt(vol,'m³');
+    document.getElementById('tVolw').textContent=fmt(volw,'kg');
+    document.getElementById('tChg').textContent=fmt(chg,'kg');
+    document.getElementById('sPieces').textContent=pieces;
+    document.getElementById('sGross').textContent=fmt(gross,'kg');
+    document.getElementById('sVol').textContent=fmt(vol,'m³');
+    document.getElementById('sChg').textContent=fmt(chg,'kg');
+  }
+  function addRow(){
+    const tb=document.querySelector('#piecesTable tbody');
+    const n=tb.children.length+1;
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${n}</td>
+      <td><input type="number" value="1" oninput="recalc()"></td>
+      <td><input type="number" value="40" oninput="recalc()"></td>
+      <td><input type="number" value="40" oninput="recalc()"></td>
+      <td><input type="number" value="40" oninput="recalc()"></td>
+      <td><input type="number" value="10" oninput="recalc()"></td>
+      <td><select class="input" style="width:auto"><option>Carton</option><option>Pallet</option></select></td>
+      <td class="text-right cell-vol">0.00</td>
+      <td><button onclick="delRow(this)" class="text-muted"><i data-lucide="x" style="width:14px;height:14px"></i></button></td>`;
+    tb.appendChild(tr); lucide.createIcons(); recalc();
+  }
+  function delRow(btn){ const tb=btn.closest('tbody'); if(tb.children.length<=1) return; btn.closest('tr').remove();
+    [...tb.children].forEach((tr,i)=>tr.firstElementChild.textContent=i+1); recalc(); }
+
+  recalc();
+</script>
+</body>
+</html>

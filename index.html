@@ -3,60 +3,257 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Cargostar — FCL Export Quote Mockups</title>
+<title>Cargostar — Shipment Quote Experience · Interactive Mockups</title>
+<meta name="description" content="Interactive UI/UX prototypes for the Cargostar shipment quote experience — FCL Export, Air Export, and the quote comparison results screen." />
+
 <script src="https://cdn.tailwindcss.com"></script>
-<script>tailwind.config={theme:{extend:{colors:{brand:{DEFAULT:'#2A3E8A',50:'#EEF2FA'},ink:'#0f172a',muted:'#64748b'}}}}</script>
+<script>
+  tailwind.config = { theme: { extend: {
+    colors: { brand:{DEFAULT:'#2A3E8A',50:'#EEF2FA',100:'#E9EDF7',700:'#22336f'}, brandgreen:'#78B947', ink:'#0f172a', muted:'#64748b' },
+    borderRadius:{ card:'1rem' },
+  }}}
+</script>
 <script src="https://unpkg.com/lucide@latest"></script>
+
 <style>
-  :root{ --brand:#2A3E8A; --ink:#0f172a; --muted:#64748b; }
-  body{ background:#f4f6fb; color:var(--ink); font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif; }
-  .card{ border-radius:1rem; background:#fff; padding:1.25rem; box-shadow:0 1px 2px rgba(0,0,0,.04); border:1px solid rgba(226,232,240,.7); transition:box-shadow .2s ease, transform .15s ease; }
-  .card:hover{ box-shadow:0 10px 28px rgba(2,6,23,.10); transform:translateY(-2px); }
-  .btn{ display:inline-flex; align-items:center; justify-content:center; gap:.5rem; border-radius:.75rem; padding:.55rem .9rem; font-size:.875rem; font-weight:600; border:1px solid transparent; background:var(--brand); color:#fff; cursor:pointer; }
-  .btn:hover{ filter:brightness(.95); }
-  .badge{ display:inline-flex; align-items:center; gap:.25rem; border-radius:9999px; padding:.2rem .55rem; font-size:.7rem; font-weight:700; background:#E9EDF7; color:#2A3E8A; border:1px solid #C9D4EE; }
-  .chip{ display:inline-flex; align-items:center; gap:.4rem; border-radius:9999px; padding:.3rem .6rem; font-size:.74rem; font-weight:700; background:#eef2fa; color:var(--brand); border:1px solid #d8e0f3; }
+  :root{ --brand:#2A3E8A; --brand-700:#22336f; --green:#78B947; --ink:#0f172a; --muted:#64748b; --border:#e2e8f0; }
+  *{ box-sizing:border-box; }
+  body{ background:#f4f6fb; color:var(--ink); font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; margin:0; }
+
+  /* chips & badges */
+  .chip{ display:inline-flex; align-items:center; gap:.4rem; border-radius:9999px; padding:.3rem .7rem; font-size:.74rem; font-weight:700; background:#eef2fa; color:var(--brand); border:1px solid #d8e0f3; }
+  .tag{ display:inline-flex; align-items:center; gap:.3rem; border-radius:9999px; padding:.2rem .6rem; font-size:.68rem; font-weight:800; letter-spacing:.02em; text-transform:uppercase; }
+  .tag-sea{ background:#E9EDF7; color:#2A3E8A; border:1px solid #C9D4EE; }
+  .tag-air{ background:#ECF8E8; color:#3F7F22; border:1px solid #CBEEC0; }
+  .tag-res{ background:#FFFAE6; color:#8F6A00; border:1px solid #F0E39F; }
+  .tag-new{ background:var(--green); color:#0b1b13; border:1px solid var(--green); }
+
+  /* buttons */
+  .btn{ display:inline-flex; align-items:center; justify-content:center; gap:.5rem; border-radius:.7rem; padding:.6rem 1rem; font-size:.875rem; font-weight:700; border:1px solid transparent; cursor:pointer; transition:filter .15s, background .15s, transform .12s; text-decoration:none; }
+  .btn-primary{ background:var(--brand); color:#fff; }
+  .btn-primary:hover{ filter:brightness(1.08); }
+  .btn-light{ background:rgba(255,255,255,.14); color:#fff; border-color:rgba(255,255,255,.35); }
+  .btn-light:hover{ background:rgba(255,255,255,.24); }
+  .btn-ghost{ background:#fff; color:#334155; border-color:var(--border); }
+  .btn-ghost:hover{ background:#f8fafc; }
+
+  /* hero */
+  .hero{ position:relative; overflow:hidden; background:linear-gradient(135deg,#2A3E8A 0%,#22336f 60%,#1b2a5c 100%); color:#fff; }
+  .hero::before{ content:""; position:absolute; inset:0; background:
+      radial-gradient(900px 400px at 85% -10%, rgba(120,185,71,.30), transparent 60%),
+      radial-gradient(700px 360px at 10% 120%, rgba(255,255,255,.12), transparent 60%); }
+  .hero .ico-bg{ position:absolute; color:rgba(255,255,255,.06); pointer-events:none; }
+  .stat{ display:inline-flex; align-items:center; gap:.5rem; background:rgba(255,255,255,.10); border:1px solid rgba(255,255,255,.18); border-radius:.7rem; padding:.5rem .8rem; font-size:.82rem; font-weight:600; }
+
+  /* flow strip */
+  .flow-step{ display:flex; align-items:center; gap:.6rem; }
+  .flow-num{ height:1.7rem; width:1.7rem; flex:none; border-radius:9999px; background:var(--brand-50,#EEF2FA); color:var(--brand); display:flex; align-items:center; justify-content:center; font-weight:800; font-size:.8rem; border:1px solid #d8e0f3; }
+  .flow-arrow{ color:#cbd5e1; }
+
+  /* cards */
+  .gcard{ position:relative; display:block; background:#fff; border:1px solid rgba(226,232,240,.8); border-radius:1rem; overflow:hidden; box-shadow:0 1px 2px rgba(2,6,23,.06); transition:box-shadow .2s, transform .2s, border-color .2s; text-decoration:none; color:inherit; }
+  .gcard:hover{ box-shadow:0 16px 40px rgba(2,6,23,.14); transform:translateY(-3px); border-color:#c9d4ee; }
+
+  /* faux-browser thumbnail with live scaled preview */
+  .thumb{ background:#eef1f7; }
+  .thumb-bar{ display:flex; align-items:center; gap:.4rem; padding:.5rem .7rem; background:#f1f4f9; border-bottom:1px solid #e4e9f2; }
+  .thumb-bar .dot{ height:.55rem; width:.55rem; border-radius:9999px; background:#cbd5e1; }
+  .thumb-bar .dot.r{ background:#f3a7ad; } .thumb-bar .dot.y{ background:#f3d79a; } .thumb-bar .dot.g{ background:#a9dca0; }
+  .thumb-bar .url{ margin-left:.5rem; font-size:.68rem; color:#94a3b8; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .thumb-view{ position:relative; overflow:hidden; height:210px; }
+  .thumb-view.tall{ height:300px; }
+  .thumb-view iframe{ position:absolute; top:0; left:0; width:1440px; height:560px; transform:scale(.40); transform-origin:top left; border:0; pointer-events:none; background:#f4f6fb; }
+  .thumb-view.tall iframe{ height:780px; }
+  .thumb-view .open{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:linear-gradient(0deg,rgba(15,23,42,.32),rgba(15,23,42,.04)); opacity:0; transition:opacity .2s; }
+  .gcard:hover .thumb-view .open{ opacity:1; }
+  .open .pillbtn{ background:#fff; color:var(--brand); font-weight:800; font-size:.82rem; padding:.5rem .9rem; border-radius:9999px; display:inline-flex; gap:.4rem; align-items:center; box-shadow:0 8px 24px rgba(2,6,23,.25); }
+
+  .feat li{ display:flex; gap:.5rem; align-items:flex-start; font-size:.83rem; color:#475569; padding:.12rem 0; }
+  .feat li svg{ color:var(--green); flex:none; margin-top:.12rem; }
+
+  .sec-eyebrow{ font-size:.72rem; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); }
   [data-lucide]{ pointer-events:none; }
 </style>
 </head>
 <body>
-<header class="border-b border-slate-200 bg-white">
-  <div class="mx-auto max-w-5xl px-4 py-4 flex items-center gap-3">
-    <span class="chip"><i data-lucide="ship" class="w-4 h-4"></i> Cargostar</span>
-    <span class="text-sm font-semibold text-slate-600">FCL Export — Quote Experience Mockups</span>
-    <span class="ml-auto badge">Client preview</span>
+
+<!-- ===== Top bar ===== -->
+<header class="sticky top-0 z-30 bg-white/90 backdrop-blur border-b border-slate-200">
+  <div class="mx-auto max-w-6xl px-4 py-3 flex items-center gap-3">
+    <span class="chip"><i data-lucide="package" class="w-4 h-4"></i> Cargostar</span>
+    <span class="text-sm font-semibold text-slate-500 hidden sm:inline">Shipment Quote Experience</span>
+    <span class="ml-auto inline-flex items-center gap-1.5 text-xs font-bold text-brand bg-brand-50 border border-[#d8e0f3] rounded-full px-3 py-1.5"><i data-lucide="eye" class="w-3.5 h-3.5"></i> Client Preview</span>
   </div>
 </header>
 
-<main class="mx-auto max-w-5xl px-4 py-8">
-  <h1 class="text-2xl font-extrabold text-ink">Shipment Quote — interactive mockups</h1>
-  <p class="text-sm text-muted mt-1 max-w-2xl">Two design directions for requesting an FCL export quote, plus the quote-comparison results page. Click <strong>Request quote</strong> inside either booking flow to jump to the results page.</p>
+<!-- ===== Hero ===== -->
+<section class="hero">
+  <i data-lucide="plane" class="ico-bg w-64 h-64" style="top:-30px; right:6%; transform:rotate(12deg)"></i>
+  <i data-lucide="ship" class="ico-bg w-56 h-56" style="bottom:-50px; left:2%;"></i>
+  <div class="relative mx-auto max-w-6xl px-4 py-12 sm:py-16">
+    <span class="inline-flex items-center gap-2 text-[.72rem] font-bold uppercase tracking-widest text-white/70"><i data-lucide="sparkles" class="w-3.5 h-3.5"></i> Interactive UI/UX Prototypes</span>
+    <h1 class="mt-3 text-3xl sm:text-4xl font-extrabold leading-tight max-w-3xl">Request-a-Quote experience for sea &amp; air freight</h1>
+    <p class="mt-3 text-white/80 max-w-2xl text-[.95rem] leading-relaxed">A set of clickable, production-quality mockups for the Cargostar shipment quote journey — from booking request to carrier comparison. Every screen shares one brand system, so any direction can ship without losing visual consistency.</p>
 
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mt-6">
-    <a href="fcl-export-booking.html" class="card block">
-      <span class="badge mb-3">V1 · Guided wizard</span>
-      <h2 class="text-lg font-extrabold text-ink">Booking — Wizard</h2>
-      <p class="text-sm text-muted mt-1">Four gated steps with a top progress tracker and a sticky summary. Dependable and guided.</p>
-      <span class="btn mt-4"><i data-lucide="arrow-right" class="w-4 h-4"></i> Open V1</span>
-    </a>
+    <div class="mt-6 flex flex-wrap gap-2.5">
+      <span class="stat"><i data-lucide="layout-dashboard" class="w-4 h-4 text-white/80"></i> 4 interactive screens</span>
+      <span class="stat"><i data-lucide="smartphone" class="w-4 h-4 text-white/80"></i> Desktop · tablet · mobile</span>
+      <span class="stat"><i data-lucide="palette" class="w-4 h-4 text-white/80"></i> One shared design system</span>
+    </div>
 
-    <a href="fcl-export-booking-v2.html" class="card block">
-      <span class="badge mb-3">V2 · Shipment Builder</span>
-      <h2 class="text-lg font-extrabold text-ink">Booking — Builder</h2>
-      <p class="text-sm text-muted mt-1">Single-canvas cockpit: section navigator + completeness ring + live visual shipment preview.</p>
-      <span class="btn mt-4"><i data-lucide="arrow-right" class="w-4 h-4"></i> Open V2</span>
-    </a>
-
-    <a href="quote-results.html" class="card block">
-      <span class="badge mb-3">Results</span>
-      <h2 class="text-lg font-extrabold text-ink">Quote comparison</h2>
-      <p class="text-sm text-muted mt-1">Carrier quote marketplace: filters, sort, expandable pricing, route timeline, and side-by-side compare.</p>
-      <span class="btn mt-4"><i data-lucide="arrow-right" class="w-4 h-4"></i> Open results</span>
-    </a>
+    <div class="mt-7 flex flex-wrap gap-3">
+      <a href="air-export/mockup/air-export-quote-request.html" class="btn btn-primary"><i data-lucide="plane-takeoff" class="w-4 h-4"></i> Open Air Export RFQ <span class="tag tag-new ml-1">New</span></a>
+      <a href="fcl-export-booking.html" class="btn btn-light"><i data-lucide="ship" class="w-4 h-4"></i> Open FCL Wizard</a>
+    </div>
   </div>
+</section>
 
-  <p class="text-xs text-muted mt-8 flex items-center gap-1.5"><i data-lucide="info" class="w-3.5 h-3.5"></i> Interactive prototypes — sample data, no live booking. Best viewed on desktop, tablet, or mobile.</p>
+<!-- ===== How it connects ===== -->
+<div class="bg-white border-b border-slate-200">
+  <div class="mx-auto max-w-6xl px-4 py-4 flex flex-wrap items-center gap-x-5 gap-y-3 text-sm font-semibold text-slate-600">
+    <span class="sec-eyebrow">How the screens connect</span>
+    <div class="flow-step"><span class="flow-num">1</span> Choose a flow</div>
+    <i data-lucide="arrow-right" class="flow-arrow w-4 h-4"></i>
+    <div class="flow-step"><span class="flow-num">2</span> Fill the quote request</div>
+    <i data-lucide="arrow-right" class="flow-arrow w-4 h-4"></i>
+    <div class="flow-step"><span class="flow-num">3</span> Compare carrier quotes</div>
+    <span class="ml-auto text-xs font-medium text-slate-400 flex items-center gap-1.5"><i data-lucide="info" class="w-3.5 h-3.5"></i> Tip: click <strong class="text-slate-500">Request quote</strong> inside any flow to jump to the results screen.</span>
+  </div>
+</div>
+
+<main class="mx-auto max-w-6xl px-4 py-10 space-y-12">
+
+  <!-- ============ SPOTLIGHT: Air Export ============ -->
+  <section>
+    <div class="flex items-center gap-2 mb-3">
+      <span class="tag tag-air"><i data-lucide="plane" class="w-3 h-3"></i> Air Export</span>
+      <span class="sec-eyebrow">Latest addition</span>
+    </div>
+    <a href="air-export/mockup/air-export-quote-request.html" class="gcard">
+      <div class="grid md:grid-cols-2">
+        <div class="thumb order-1 md:order-none">
+          <div class="thumb-bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="url">cargostar · air-export-quote-request.html</span></div>
+          <div class="thumb-view tall"><iframe src="air-export/mockup/air-export-quote-request.html" loading="lazy" scrolling="no" tabindex="-1" title="Air Export Quote Request preview"></iframe>
+            <div class="open"><span class="pillbtn"><i data-lucide="external-link" class="w-4 h-4"></i> Open mockup</span></div>
+          </div>
+        </div>
+        <div class="p-6 sm:p-7 flex flex-col">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="tag tag-air">Air · Freight</span>
+            <span class="tag tag-new">New</span>
+          </div>
+          <h2 class="mt-3 text-xl font-extrabold text-ink">Air Export — Quote Request (RFQ)</h2>
+          <p class="mt-2 text-sm text-muted leading-relaxed">A streamlined 4-step request tuned for air freight — capturing only the essentials a forwarder needs to price the move, with the same wizard rhythm as the FCL flow.</p>
+          <ul class="feat mt-4 space-y-0.5">
+            <li><i data-lucide="check-circle-2" class="w-4 h-4"></i> 4-step wizard: Service &amp; Cargo · Route · Pieces &amp; Services · Parties</li>
+            <li><i data-lucide="check-circle-2" class="w-4 h-4"></i> <strong>Live chargeable (volumetric) weight</strong> — the number air rates are billed on</li>
+            <li><i data-lucide="check-circle-2" class="w-4 h-4"></i> Polished Dangerous-goods &amp; cold-chain toggles with conditional fields</li>
+            <li><i data-lucide="check-circle-2" class="w-4 h-4"></i> Shipper / Consignee / Notify-party + dedicated contact card</li>
+          </ul>
+          <span class="btn btn-primary mt-5 self-start"><i data-lucide="arrow-right" class="w-4 h-4"></i> Open Air Export RFQ</span>
+        </div>
+      </div>
+    </a>
+  </section>
+
+  <!-- ============ FCL Export (Sea) ============ -->
+  <section>
+    <div class="flex items-center gap-2 mb-3">
+      <span class="tag tag-sea"><i data-lucide="ship" class="w-3 h-3"></i> FCL Export · Sea</span>
+      <span class="sec-eyebrow">Two design directions — same brand system</span>
+    </div>
+    <div class="grid md:grid-cols-2 gap-6">
+
+      <!-- V1 -->
+      <a href="fcl-export-booking.html" class="gcard">
+        <div class="thumb">
+          <div class="thumb-bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="url">cargostar · fcl-export-booking.html</span></div>
+          <div class="thumb-view"><iframe src="fcl-export-booking.html" loading="lazy" scrolling="no" tabindex="-1" title="FCL Export Wizard preview"></iframe>
+            <div class="open"><span class="pillbtn"><i data-lucide="external-link" class="w-4 h-4"></i> Open mockup</span></div>
+          </div>
+        </div>
+        <div class="p-5 sm:p-6">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="tag tag-sea">V1 · Guided wizard</span>
+          </div>
+          <h3 class="mt-3 text-lg font-extrabold text-ink">FCL Export — Guided Wizard</h3>
+          <p class="mt-1.5 text-sm text-muted leading-relaxed">Four gated steps with a horizontal progress tracker and a sticky text summary. Dependable, guided, great for first-time exporters.</p>
+          <ul class="feat mt-3 space-y-0.5">
+            <li><i data-lucide="check-circle-2" class="w-4 h-4"></i> Step-by-step with validation gates</li>
+            <li><i data-lucide="check-circle-2" class="w-4 h-4"></i> Live container TEU / weight totals</li>
+            <li><i data-lucide="check-circle-2" class="w-4 h-4"></i> Sticky quote summary sidebar</li>
+          </ul>
+          <span class="btn btn-ghost mt-4"><i data-lucide="arrow-right" class="w-4 h-4"></i> Open V1</span>
+        </div>
+      </a>
+
+      <!-- V2 -->
+      <a href="fcl-export-booking-v2.html" class="gcard">
+        <div class="thumb">
+          <div class="thumb-bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="url">cargostar · fcl-export-booking-v2.html</span></div>
+          <div class="thumb-view"><iframe src="fcl-export-booking-v2.html" loading="lazy" scrolling="no" tabindex="-1" title="FCL Export Shipment Builder preview"></iframe>
+            <div class="open"><span class="pillbtn"><i data-lucide="external-link" class="w-4 h-4"></i> Open mockup</span></div>
+          </div>
+        </div>
+        <div class="p-5 sm:p-6">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="tag tag-sea">V2 · Shipment Builder</span>
+            <span class="tag" style="background:#F3E8FF;color:#7E22CE;border:1px solid #E9D5FF">Premium concept</span>
+          </div>
+          <h3 class="mt-3 text-lg font-extrabold text-ink">FCL Export — Shipment Builder</h3>
+          <p class="mt-1.5 text-sm text-muted leading-relaxed">A single-canvas cockpit: section navigator + completeness ring + a live visual shipment preview. Premium, distinctive, fast for repeat users.</p>
+          <ul class="feat mt-3 space-y-0.5">
+            <li><i data-lucide="check-circle-2" class="w-4 h-4"></i> Free navigation, no step gating</li>
+            <li><i data-lucide="check-circle-2" class="w-4 h-4"></i> Animated route + container-stack preview</li>
+            <li><i data-lucide="check-circle-2" class="w-4 h-4"></i> Completeness ring + auto-save</li>
+          </ul>
+          <span class="btn btn-ghost mt-4"><i data-lucide="arrow-right" class="w-4 h-4"></i> Open V2</span>
+        </div>
+      </a>
+    </div>
+  </section>
+
+  <!-- ============ Results (shared) ============ -->
+  <section>
+    <div class="flex items-center gap-2 mb-3">
+      <span class="tag tag-res"><i data-lucide="bar-chart-3" class="w-3 h-3"></i> Quote Results</span>
+      <span class="sec-eyebrow">Shown after “Request quote” — shared by every flow</span>
+    </div>
+    <a href="quote-results.html" class="gcard">
+      <div class="grid md:grid-cols-2">
+        <div class="thumb">
+          <div class="thumb-bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="url">cargostar · quote-results.html</span></div>
+          <div class="thumb-view tall"><iframe src="quote-results.html" loading="lazy" scrolling="no" tabindex="-1" title="Quote comparison results preview"></iframe>
+            <div class="open"><span class="pillbtn"><i data-lucide="external-link" class="w-4 h-4"></i> Open mockup</span></div>
+          </div>
+        </div>
+        <div class="p-6 sm:p-7 flex flex-col">
+          <span class="tag tag-res self-start">Results · Comparison</span>
+          <h3 class="mt-3 text-xl font-extrabold text-ink">Quote Comparison — Carrier Marketplace</h3>
+          <p class="mt-2 text-sm text-muted leading-relaxed">The screen a shipper lands on after submitting a request: a sortable marketplace of carrier quotes with transparent pricing and routing — for both sea and air.</p>
+          <ul class="feat mt-4 space-y-0.5">
+            <li><i data-lucide="check-circle-2" class="w-4 h-4"></i> Sticky filter sidebar + sort</li>
+            <li><i data-lucide="check-circle-2" class="w-4 h-4"></i> Expandable pricing breakdown &amp; route timeline</li>
+            <li><i data-lucide="check-circle-2" class="w-4 h-4"></i> Side-by-side compare bar / modal</li>
+          </ul>
+          <span class="btn btn-ghost mt-5 self-start"><i data-lucide="arrow-right" class="w-4 h-4"></i> Open results</span>
+        </div>
+      </div>
+    </a>
+  </section>
+
 </main>
+
+<!-- ===== Footer ===== -->
+<footer class="border-t border-slate-200 bg-white">
+  <div class="mx-auto max-w-6xl px-4 py-7 flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-slate-500">
+    <span class="chip"><i data-lucide="package" class="w-3.5 h-3.5"></i> Cargostar</span>
+    <span class="flex items-center gap-1.5"><i data-lucide="info" class="w-3.5 h-3.5"></i> Interactive prototypes — sample data, no live booking.</span>
+    <span class="flex items-center gap-1.5"><i data-lucide="palette" class="w-3.5 h-3.5"></i> One shared design system · brand <code class="text-slate-600">#2A3E8A</code>.</span>
+    <span class="ml-auto flex items-center gap-1.5"><i data-lucide="monitor" class="w-3.5 h-3.5"></i> Best viewed on desktop; fully responsive on tablet &amp; mobile.</span>
+  </div>
+</footer>
+
 <script>lucide.createIcons();</script>
 </body>
 </html>
