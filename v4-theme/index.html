@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html lang="en" class="theme-cargostar">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CargoStar — Branded Shell</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  /* Teach Tailwind the CargoStar design tokens so we can style with utilities
+     (bg-surface-card, text-content-strong, border, text-brand, shadow-2, rounded-lg…)
+     instead of writing custom CSS. darkMode:'class' tracks the <html class="dark"> toggle. */
+  tailwind.config = {
+    darkMode: 'class',
+    theme: {
+      extend: {
+        colors: {
+          brand:  'var(--p-primary-color)',
+          accent: 'var(--p-accent)',
+          surface: { 0:'var(--surface-0)', 50:'var(--surface-50)', 100:'var(--surface-100)',
+                     200:'var(--surface-200)', 300:'var(--surface-300)', card:'var(--surface-card)' },
+          content: { DEFAULT:'var(--content)', strong:'var(--content-strong)',
+                     muted:'var(--content-muted)', subtle:'var(--content-subtle)' },
+          line:        'var(--border)',
+          'line-strong':'var(--border-strong)',
+          ok:   { DEFAULT:'var(--ok)',   soft:'var(--ok-soft)',   ink:'var(--ok-ink)' },
+          info: { DEFAULT:'var(--info)', soft:'var(--info-soft)', ink:'var(--info-ink)' },
+          warn: { DEFAULT:'var(--warn)', soft:'var(--warn-soft)', ink:'var(--warn-ink)' },
+          err:  { DEFAULT:'var(--err)',  soft:'var(--err-soft)',  ink:'var(--err-ink)' },
+        },
+        borderColor:  { DEFAULT:'var(--border)' },
+        borderRadius: { DEFAULT:'var(--radius)', sm:'var(--radius-sm)', lg:'var(--radius-lg)', xl:'var(--radius-xl)' },
+        boxShadow:    { 1:'var(--shadow-1)', 2:'var(--shadow-2)', 3:'var(--shadow-3)' },
+      }
+    }
+  }
+</script>
+<link rel="stylesheet" href="_shared/cargostar-ds.css" />
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+  /* ============================================================
+     CargoStar Branded Shell — colored chrome (sidebar + header),
+     clear active nav state, light content canvas.
+     Built ONLY on shared DS tokens — no invented hex.
+     ============================================================ */
+
+  /* ---- app fills the viewport: header/footer & sidebar chrome stay fixed,
+         only the main area + the sidebar's NAV area scroll (independently) ---- */
+  html, body{ height:100%; overflow:hidden; }
+  .app{ height:100vh; height:100dvh; min-height:0; overflow:hidden; grid-template-rows:var(--header-h) minmax(0,1fr) auto; }
+  .app-main{ overflow-y:auto; overflow-x:hidden; scroll-behavior:smooth; }
+
+  /* sidebar = sticky brand (top) + scrollable nav + fixed footer (bottom) */
+  .sidenav{ overflow:hidden; }
+  .sidenav .brand{ flex:none; padding-bottom:.7rem; margin-bottom:.35rem; border-bottom:1px solid rgba(255,255,255,.10); }
+  .sidenav .side-foot{ flex:none; }
+  .nav-scroll{ flex:1 1 auto; min-height:0; overflow-y:auto; overflow-x:hidden; scroll-behavior:smooth; }
+
+  /* ---- modern custom scrollbars (theme-matched, rounded, hover-reveal) ---- */
+  .nav-scroll{ scrollbar-width:thin; scrollbar-color:rgba(255,255,255,.22) transparent; }
+  .nav-scroll::-webkit-scrollbar{ width:8px; }
+  .nav-scroll::-webkit-scrollbar-track{ background:transparent; margin:.25rem 0; }
+  .nav-scroll::-webkit-scrollbar-thumb{ background:rgba(255,255,255,.16); border-radius:9999px; border:2px solid transparent; background-clip:padding-box; transition:background .2s ease; }
+  .nav-scroll:hover{ scrollbar-color:rgba(255,255,255,.4) transparent; }
+  .nav-scroll:hover::-webkit-scrollbar-thumb{ background:rgba(255,255,255,.34); background-clip:padding-box; }
+  .nav-scroll::-webkit-scrollbar-thumb:hover{ background:rgba(255,255,255,.55); background-clip:padding-box; }
+  /* hide the rail scrollbar while collapsed (icon-only) */
+  .app.rail:not(:hover) .nav-scroll{ scrollbar-width:none; }
+  .app.rail:not(:hover) .nav-scroll::-webkit-scrollbar{ width:0; }
+
+  /* dark-mode sidebar scrollbar (navy surface) */
+  html.dark .nav-scroll{ scrollbar-color:rgba(148,163,184,.35) transparent; }
+  html.dark .nav-scroll::-webkit-scrollbar-thumb{ background:rgba(148,163,184,.26); }
+  html.dark .nav-scroll:hover::-webkit-scrollbar-thumb{ background:rgba(148,163,184,.46); }
+
+  /* main content scrollbar (theme-neutral) */
+  .app-main{ scrollbar-width:thin; scrollbar-color:var(--border-strong) transparent; }
+  .app-main::-webkit-scrollbar{ width:11px; height:11px; }
+  .app-main::-webkit-scrollbar-track{ background:transparent; }
+  .app-main::-webkit-scrollbar-thumb{ background:var(--border-strong); border-radius:9999px; border:3px solid transparent; background-clip:padding-box; transition:background .2s ease; }
+  .app-main:hover::-webkit-scrollbar-thumb{ background:var(--content-subtle); background-clip:padding-box; }
+
+  /* ---- colored SIDEBAR (secondary/brand chrome) ---- */
+  .theme-cargostar .sidenav{
+    background:linear-gradient(180deg,var(--p-primary-700),var(--p-primary-900));
+    border-right:none;
+    color:#fff;
+    box-shadow:var(--shadow-2);
+    display:flex; flex-direction:column;
+  }
+  .sidenav .brand{ color:#fff; padding:.35rem .35rem .9rem; }
+  .sidenav .brand-mark{ background:#fff; color:var(--p-primary-700); }
+  .sidenav .brand .v{ color:var(--p-accent); }
+  .sidenav .nav-group{ color:rgba(255,255,255,.45); }
+  .sidenav .nav-item{ color:rgba(255,255,255,.74); font-weight:600; margin-bottom:.12rem; }
+  .sidenav .nav-item:hover{ background:rgba(255,255,255,.09); color:#fff; }
+  .sidenav .nav-item i{ opacity:.9; }
+
+  /* active menu item — soft overlay pill + green accent bar + count */
+  .sidenav .nav-item.on{
+    background:rgba(255,255,255,.14);
+    color:#fff;
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.10);
+  }
+  .sidenav .nav-item.on i{ opacity:1; color:var(--p-accent); }
+  .sidenav .nav-item.on::before{
+    content:""; position:absolute; left:-.75rem; top:.3rem; bottom:.3rem;
+    width:4px; border-radius:9999px; background:var(--p-accent);
+    box-shadow:0 0 10px color-mix(in srgb,var(--p-accent) 70%,transparent);
+  }
+  .nav-count{
+    margin-left:auto; font-size:.66rem; font-weight:800; line-height:1;
+    padding:.18rem .42rem; border-radius:9999px;
+    background:rgba(255,255,255,.16); color:#fff;
+  }
+  .nav-item.on .nav-count{ background:var(--p-accent); color:#06210a; }
+  .sidenav .side-foot{
+    margin-top:auto; padding:.7rem; border-top:1px solid rgba(255,255,255,.12);
+    display:flex; align-items:center; gap:.6rem; color:rgba(255,255,255,.85);
+  }
+  .side-foot .av{ width:2rem;height:2rem;border-radius:9999px;background:rgba(255,255,255,.18);
+    display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.8rem;flex:none; }
+
+  /* ---- caret + expandable submenus ---- */
+  .nav-caret{ margin-left:auto; width:1rem;height:1rem; opacity:.65; transition:var(--ease); }
+  .nav-item.has-sub .nav-count{ margin-left:auto; }
+  .nav-item.has-sub .nav-count + .nav-caret{ margin-left:.45rem; }
+  .nav-item.open .nav-caret{ transform:rotate(180deg); opacity:1; }
+  .nav-item.parent-on{ color:#fff; background:rgba(255,255,255,.07); }
+  .submenu{ display:none; margin:.2rem 0 .55rem 1.25rem; padding-left:.85rem; border-left:1.5px solid rgba(255,255,255,.15); }
+  .submenu.open{ display:block; animation:subIn .2s ease; }
+  @keyframes subIn{ from{ opacity:0; transform:translateY(-4px); } to{ opacity:1; transform:none; } }
+  .subitem{ position:relative; display:flex; align-items:center; gap:.6rem; padding:.42rem .55rem; margin:.12rem 0;
+    border-radius:var(--radius); color:rgba(255,255,255,.66); font-size:.8rem; font-weight:600; cursor:pointer; transition:var(--ease); }
+  .subitem .si{ width:1.55rem;height:1.55rem;border-radius:.55rem;display:flex;align-items:center;justify-content:center;
+    background:rgba(255,255,255,.08); color:rgba(255,255,255,.82); flex:none; transition:var(--ease); }
+  .subitem .si i{ width:.86rem;height:.86rem; }
+  .subitem .si-label{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .subitem .si-count{ margin-left:auto; font-size:.62rem;font-weight:800;line-height:1; padding:.18rem .44rem;
+    border-radius:9999px; background:rgba(255,255,255,.13); color:rgba(255,255,255,.88); }
+  .subitem:hover{ background:rgba(255,255,255,.10); color:#fff; transform:translateX(2px); }
+  .subitem:hover .si{ background:rgba(255,255,255,.2); color:#fff; }
+  .subitem.on{ background:rgba(255,255,255,.14); color:#fff; border-radius:var(--radius); }
+  .subitem.on::before{ content:""; position:absolute; left:-.92rem; top:.35rem; bottom:.35rem; width:2.5px;
+    border-radius:9999px; background:var(--p-accent); box-shadow:0 0 8px color-mix(in srgb,var(--p-accent) 70%,transparent); }
+  .subitem.on .si{ background:var(--p-accent); color:#06210a; }
+  .subitem.on .si-count{ background:var(--p-accent); color:#06210a; }
+
+  /* ---- rail (collapsed) overrides ---- */
+  .app.rail .submenu{ display:none; }
+  .nav-cell{ position:relative; }
+  .fly-head, .rail-tip{ display:none; }   /* legacy popup elements — kept inert/hidden */
+
+  /* Size icons reliably whether they are still <i> or already replaced by a
+     lucide <svg> — so icons NEVER disappear or over-size in any state. */
+  .sidenav .nav-item > i:not(.nav-caret),
+  .sidenav .nav-item > svg:not(.nav-caret){ width:1.2rem; height:1.2rem; flex:none; }
+  .sidenav .nav-item > .nav-caret{ width:1rem; height:1rem; flex:none; }
+  .subitem .si > i, .subitem .si > svg{ width:.9rem; height:.9rem; }
+
+  /* COLLAPSED = icons only; icons stay put (flex-start) so nothing shifts,
+     while text/badges wipe + fade out smoothly (and back in on hover) — same as brand */
+  .app.rail .nav-item{ justify-content:flex-start; }
+  .app.rail .side-foot{ justify-content:center; }
+
+  /* unified smooth, two-way (in & out) reveal for all sidebar text/badges */
+  .sidenav .nav-label,
+  .sidenav .side-foot > div{
+    white-space:nowrap; display:inline-block; overflow:hidden;
+    transition:opacity .22s ease, transform .26s cubic-bezier(.22,.61,.36,1), max-width .3s cubic-bezier(.22,.61,.36,1);
+  }
+  .sidenav .nav-count, .sidenav .nav-caret{ transition:opacity .2s ease; }
+  .sidenav .nav-group{ overflow:hidden; transition:opacity .2s ease, max-height .26s ease, padding .26s ease; }
+  .app.rail .nav-label,
+  .app.rail .side-foot > div{ display:inline-block; opacity:0; transform:translateX(-6px); max-width:0; }
+  .app.rail .nav-count, .app.rail .nav-caret{ opacity:0; }
+  .app.rail .nav-group{ display:block; opacity:0; max-height:0; padding-top:0; padding-bottom:0; }
+
+  /* ---- rail HOVER-EXPAND overlay — widens in place over content; main never resizes ---- */
+  .app.rail .sidenav{
+    justify-self:start; width:var(--nav-rail); overflow:hidden; z-index:45;
+    transition:width .28s cubic-bezier(.22,.61,.36,1), box-shadow .28s ease;
+  }
+  .app.rail .sidenav:hover{
+    width:var(--nav-w); overflow:hidden; z-index:60; box-shadow:var(--shadow-3);
+  }
+  /* EXPANDED on hover = icons + labels; everything wipes/fades back in (icons stay put) */
+  .app.rail .sidenav:hover .nav-item,
+  .app.rail .sidenav:hover .side-foot{ justify-content:flex-start; }
+  .app.rail .sidenav:hover .nav-label{ opacity:1; transform:none; max-width:180px; }
+  .app.rail .sidenav:hover .side-foot > div{ opacity:1; transform:none; max-width:160px; }
+  .app.rail .sidenav:hover .nav-count,
+  .app.rail .sidenav:hover .nav-caret{ opacity:1; }
+  .app.rail .sidenav:hover .nav-group{ opacity:1; max-height:3rem; padding-top:.85rem; padding-bottom:.35rem; }
+  .app.rail .sidenav:hover .submenu.open{ display:block; }
+
+  /* ---- BRAND: mark always visible & stable; text wipes + fades smoothly BOTH ways ---- */
+  .sidenav .brand{ overflow:hidden; flex-wrap:nowrap; }
+  .sidenav .brand-text{ white-space:nowrap; display:inline-block;
+    transition:opacity .22s ease, transform .26s cubic-bezier(.22,.61,.36,1), max-width .3s cubic-bezier(.22,.61,.36,1); }
+  .app.rail .brand-text{ display:inline-block; opacity:0; transform:translateX(-6px); max-width:0; overflow:hidden; }
+  .app.rail .sidenav:hover .brand-text{ opacity:1; transform:none; max-width:220px; }
+
+  /* ---- nav hover micro-interactions ---- */
+  .sidenav .nav-item{ transition:background var(--ease), color var(--ease), transform var(--ease), box-shadow var(--ease); }
+  .sidenav .nav-item:hover{ transform:translateX(3px); }
+  .sidenav .nav-item > i:not(.nav-caret),
+  .sidenav .nav-item > svg:not(.nav-caret){ transition:transform var(--ease), color var(--ease); }
+  .sidenav .nav-item:hover > i:not(.nav-caret),
+  .sidenav .nav-item:hover > svg:not(.nav-caret){ transform:scale(1.14); }
+  .sidenav .nav-item.on::before{ transition:var(--ease); }
+  .subitem:hover .si{ transform:scale(1.1); }
+  /* collapsed (not yet expanded): don't slide icons sideways — keeps them centered */
+  .app.rail .sidenav:not(:hover) .nav-item:hover{ transform:none; }
+
+  @media (prefers-reduced-motion: reduce){
+    .app.rail .sidenav,
+    .sidenav .nav-label, .sidenav .side-foot > div, .sidenav .nav-count,
+    .sidenav .nav-caret, .sidenav .nav-group, .sidenav .brand-text{ transition:none; }
+    .sidenav .nav-item:hover{ transform:none; }
+    .sidenav .nav-item:hover > i:not(.nav-caret),
+    .sidenav .nav-item:hover > svg:not(.nav-caret), .subitem:hover .si{ transform:none; }
+    .app.rail .nav-label, .app.rail .side-foot > div, .app.rail .brand-text{ transform:none; }
+  }
+
+  /* ---- colored HEADER (matches chrome) ---- */
+  .theme-cargostar .app-header{
+    background:var(--p-primary-color);
+    border-bottom:1px solid color-mix(in srgb,#000 12%,var(--p-primary-color));
+    color:#fff;
+  }
+  /* ============================================================
+     DARK-MODE CHROME — sidebar / header / footer switch from
+     branded indigo (light) to deep-navy surfaces (dark).
+     Higher specificity than the light rules, so order-independent.
+     ============================================================ */
+  html.dark.theme-cargostar .sidenav{
+    background:linear-gradient(180deg,var(--surface-card),var(--surface-0));
+    border-right:1px solid var(--border);
+    color:var(--content); box-shadow:none;
+  }
+  html.dark .sidenav .brand{ color:var(--content-strong); }
+  html.dark .sidenav .brand-mark{ background:var(--p-primary-color); color:#fff; }
+  html.dark .sidenav .nav-group{ color:var(--content-subtle); }
+  html.dark .sidenav .nav-item{ color:var(--content-muted); }
+  html.dark .sidenav .nav-item:hover{ background:var(--surface-200); color:var(--content-strong); }
+  html.dark .sidenav .nav-item.on{ background:color-mix(in srgb,var(--p-primary-color) 24%,transparent);
+    color:var(--content-strong); box-shadow:none; }
+  html.dark .sidenav .nav-item.on i{ color:var(--p-accent); }
+  html.dark .sidenav .nav-item.parent-on{ background:var(--surface-100); color:var(--content-strong); }
+  html.dark .nav-count{ background:var(--surface-200); color:var(--content); }
+  html.dark .nav-item.on .nav-count{ background:var(--p-accent); color:#06210a; }
+  html.dark .side-foot{ border-top-color:var(--border); color:var(--content); }
+  html.dark .side-foot .av{ background:var(--surface-200); color:var(--content-strong); }
+  html.dark .submenu{ border-left-color:var(--border-strong); }
+  html.dark .subitem{ color:var(--content-muted); }
+  html.dark .subitem:hover{ background:var(--surface-200); color:var(--content-strong); }
+  html.dark .subitem.on{ background:color-mix(in srgb,var(--p-primary-color) 24%,transparent); color:var(--content-strong); }
+  html.dark .subitem .si{ background:var(--surface-200); color:var(--content); }
+  html.dark .subitem:hover .si{ background:var(--surface-300); color:var(--content-strong); }
+  html.dark .subitem.on .si{ background:var(--p-accent); color:#06210a; }
+  html.dark .subitem .si-count{ background:var(--surface-200); color:var(--content); }
+  html.dark .subitem.on .si-count{ background:var(--p-accent); color:#06210a; }
+  html.dark .subitem.on::before{ background:var(--p-accent); }
+
+  html.dark.theme-cargostar .app-header{
+    background:var(--surface-card); border-bottom:1px solid var(--border); color:var(--content-strong);
+  }
+  html.dark .app-header .crumb{ color:var(--content-muted); }
+  html.dark .app-header .crumb b{ color:var(--content-strong); }
+  html.dark .app-header .searchbar{ background:var(--surface-100); border-color:var(--border); color:var(--content-muted); }
+  html.dark .app-header .searchbar .kbd{ border-color:var(--border-strong); color:var(--content-subtle); background:var(--surface-card); }
+  html.dark .app-header .hbtn{ color:var(--content); background:var(--surface-100); border-color:var(--border); }
+  html.dark .app-header .hbtn:hover{ background:var(--surface-200); }
+  html.dark .app-header .hbtn .dot{ border-color:var(--surface-card); }
+  html.dark .app-header .usermenu{ background:var(--surface-100); border-color:var(--border); color:var(--content-strong); }
+  /* footer already follows --surface-card / --content tokens, so it flips automatically */
+  .app-header .crumb{ color:rgba(255,255,255,.7); font-size:.8rem; display:flex; align-items:center; gap:.4rem; }
+  .app-header .crumb b{ color:#fff; }
+  .app-header .searchbar{
+    background:rgba(255,255,255,.14); border-color:rgba(255,255,255,.20); color:rgba(255,255,255,.92);
+  }
+  .app-header .searchbar .kbd{ border-color:rgba(255,255,255,.3); color:rgba(255,255,255,.8); background:rgba(255,255,255,.08); }
+  .app-header .hbtn{
+    width:2.25rem;height:2.25rem;border-radius:var(--radius); display:flex;align-items:center;justify-content:center;
+    color:#fff; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.14); cursor:pointer; position:relative;
+    transition:var(--ease);
+  }
+  .app-header .hbtn:hover{ background:rgba(255,255,255,.18); }
+  .app-header .hbtn .dot{ position:absolute; top:.3rem; right:.32rem; width:.5rem;height:.5rem;border-radius:9999px;
+    background:var(--p-accent); border:2px solid var(--p-primary-color); }
+  .app-header .usermenu{ display:flex; align-items:center; gap:.55rem; padding:.3rem .5rem .3rem .35rem;
+    border-radius:9999px; background:rgba(255,255,255,.10); border:1px solid rgba(255,255,255,.16); cursor:pointer; color:#fff; }
+  .app-header .usermenu .av{ width:1.9rem;height:1.9rem;border-radius:9999px;background:var(--p-accent);color:#06210a;
+    display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.78rem; }
+
+  /* ---- professional header controls: theme toggle + profile chip ---- */
+  .app-header #darkBtn{ border-radius:9999px; }
+  .app-header #darkBtn:hover{ background:rgba(255,255,255,.2); }
+  .app-header #darkBtn i{ animation:iconPop .4s cubic-bezier(.34,1.56,.64,1); }
+  @keyframes iconPop{ from{ transform:rotate(-110deg) scale(.5); opacity:0; } to{ transform:none; opacity:1; } }
+  html.dark .app-header #darkBtn:hover{ background:var(--surface-200); }
+
+  .app-header .usermenu{ padding:.26rem .6rem .26rem .32rem; gap:.5rem; transition:background var(--ease), box-shadow var(--ease); }
+  .app-header .usermenu:hover{ background:rgba(255,255,255,.2); box-shadow:var(--shadow-1); }
+  .app-header .usermenu .av{ border:2px solid rgba(255,255,255,.28); box-shadow:0 1px 3px rgb(2 6 23 / .25); }
+  .umeta{ display:flex; flex-direction:column; align-items:flex-start; line-height:1.15; max-width:9rem; }
+  .umeta .uname{ font-size:.8rem; font-weight:700; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
+  .umeta .urole{ font-size:.66rem; font-weight:600; color:rgba(255,255,255,.66); white-space:nowrap; }
+  .app-header .usermenu .uchev{ opacity:.8; transition:transform .25s cubic-bezier(.4,0,.2,1); margin-left:.1rem; }
+  div:has(> #userPop.on) .uchev{ transform:rotate(180deg); opacity:1; }
+  html.dark .umeta .uname{ color:var(--content-strong); }
+  html.dark .umeta .urole{ color:var(--content-muted); }
+  html.dark .app-header .usermenu .av{ border-color:rgba(255,255,255,.14); }
+  @media(max-width:760px){ .umeta{ display:none; } }
+
+  /* ---- popovers (notifications / user) ---- */
+  .pop{ position:absolute; top:calc(var(--header-h) - 6px); z-index:50; width:340px; background:var(--surface-card);
+    color:var(--content); border:1px solid var(--border); border-radius:var(--radius-lg); box-shadow:var(--shadow-3);
+    overflow:hidden; display:none; }
+  .pop.on{ display:block; }
+  .pop .pop-h{ padding:.8rem 1rem; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+  .pop .pop-h h4{ font-size:.9rem; font-weight:800; }
+  .noti{ display:flex; gap:.7rem; padding:.7rem 1rem; border-bottom:1px solid var(--border); cursor:pointer; }
+  .noti:hover{ background:var(--surface-50); }
+  .noti .ic{ width:2rem;height:2rem;border-radius:.55rem;display:flex;align-items:center;justify-content:center;flex:none; }
+  .noti .t{ font-size:.82rem; font-weight:700; color:var(--content-strong); }
+  .noti .s{ font-size:.76rem; color:var(--content-muted); }
+  .noti .ago{ font-size:.68rem; color:var(--content-subtle); margin-left:auto; white-space:nowrap; }
+
+  /* ---- page heading: now Tailwind utilities in markup ---- */
+
+  /* ---- KPI cards ---- */
+  .kpis{ display:grid; grid-template-columns:repeat(5,1fr); gap:.85rem; margin-bottom:1.1rem; }
+  @media(max-width:1280px){ .kpis{ grid-template-columns:repeat(3,1fr); } }
+  @media(max-width:820px){ .kpis{ grid-template-columns:repeat(2,1fr); } }
+  @media(max-width:460px){ .kpis{ grid-template-columns:1fr; } }
+  .kpi{ cursor:pointer; transition:var(--ease); position:relative; overflow:hidden; }
+  .kpi:hover{ box-shadow:var(--shadow-2); transform:translateY(-1px); }
+  .kpi.on{ 
+    /* border-color:var(--p-primary-color);  */
+  }
+  .kpi .top{ display:flex; align-items:center; gap:.6rem; }
+  .kpi .ico{ box-shadow:var(--shadow-1); }
+  .kpi .lab{ font-size:.74rem; font-weight:700; color:var(--content-muted); margin-top:.55rem; }
+  .kpi .delta{ font-size:.72rem; font-weight:800; display:inline-flex; align-items:center; gap:.2rem; }
+
+  /* ---- filter bar ---- */
+  .filterbar{ display:flex; align-items:center; gap:.6rem; flex-wrap:wrap; padding:.85rem 1rem; margin-bottom:1rem; }
+  .seg{ display:inline-flex; background:var(--surface-100); border:1px solid var(--border); border-radius:9999px; padding:.18rem; }
+  .seg button{ border:none; background:transparent; color:var(--content-muted); font-weight:700; font-size:.78rem;
+    padding:.32rem .7rem; border-radius:9999px; cursor:pointer; white-space:nowrap; transition:var(--ease); }
+  .seg button.on{ background:var(--surface-card); color:var(--p-primary-color); box-shadow:var(--shadow-1); }
+  /* filter group labels now use Tailwind utilities in markup */
+
+  /* ---- live-dashboard filter rows / pills / chips ---- */
+  .fl-row{ display:flex; align-items:center; gap:.55rem .8rem; flex-wrap:wrap; width:100%; }
+  .chips{ display:inline-flex; align-items:center; gap:.5rem; flex-wrap:wrap; }
+  .fl-divider{ width:100%; height:1px; background:linear-gradient(to right,transparent,var(--border-strong),transparent); margin:.15rem 0; }
+  /* lookup fields (.fchip) now use Tailwind utilities in markup */
+  .range{ display:inline-flex; align-items:center; gap:.5rem; }
+  .range input[type=date]{ border:1px solid var(--border-strong); border-radius:var(--radius-sm); padding:.3rem .5rem; font-size:.8rem;
+    background:var(--surface-card); color:var(--content-strong); outline:none; cursor:pointer; }
+  .range input[type=date]:focus{ border-color:var(--p-primary-color); box-shadow:var(--ring); }
+  .range .sep{ color:var(--content-subtle); font-weight:700; }
+  .kpi .v.pos{ color:var(--ok-ink); }
+  .kpi .v.neg{ color:var(--err-ink); }
+  .th-sort{ display:inline-flex; align-items:center; gap:.35rem; cursor:pointer; }
+  .th-sort i{ width:.9rem; height:.9rem; color:var(--content-subtle); }
+  /* sticky first (Shipment) column, like the live grid */
+  .grid-table th:first-child, .grid-table td:first-child{ position:sticky; left:0; z-index:2; background:var(--surface-card); }
+  .grid-table thead th:first-child{ z-index:3; background:var(--surface-100); }
+  .grid-table tbody tr:hover td:first-child{ background:color-mix(in srgb,var(--p-primary-color) 6%,var(--surface-card)); }
+
+  /* ---- density & font-size parity with the live dashboard ---- */
+  .kpi{ padding:.9rem 1rem; }
+  .kpi .ico{ width:2.25rem; height:2.25rem; border-radius:9999px; }       /* circular, like .stat__icon */
+  .kpi .v{ font-size:1.875rem; line-height:1.15; margin-top:.55rem; }     /* text-3xl */
+  .kpi .lab{ font-size:.8rem; font-weight:600; text-transform:uppercase; letter-spacing:.03em; margin:0; line-height:1.15; color:var(--content-muted); }
+  .grid-table{ font-size:.875rem; }                              /* text-sm */
+  .grid-table thead th{ padding:.6rem 1rem; font-size:.7rem; }   /* px-4 py-3, uppercase */
+  /* nice brand-tinted top border framing the sticky header */
+  .grid-table thead th{ border-top:2px solid color-mix(in srgb,var(--p-primary-color) 55%,transparent); }
+  .grid-table tbody td{ padding:.3rem .75rem; }                  /* px-3 py-1 → tight rows, max records on screen */
+  .grid-table .sub{ font-size:.72rem; }                          /* order_ref subtitle (text-xs) */
+  /* nested grid scroller: both-axis scroll + themed custom scrollbar */
+  .grid-wrap{ scroll-behavior:smooth; scrollbar-width:thin; scrollbar-color:var(--border-strong) transparent; }
+  .grid-wrap::-webkit-scrollbar{ width:11px; height:11px; }
+  .grid-wrap::-webkit-scrollbar-track{ background:transparent; }
+  .grid-wrap::-webkit-scrollbar-thumb{ background:var(--border-strong); border-radius:9999px; border:3px solid transparent; background-clip:padding-box; }
+  .grid-wrap:hover::-webkit-scrollbar-thumb{ background:var(--content-subtle); background-clip:padding-box; }
+
+  /* ---- results toolbar ---- */
+  .restool{ display:flex; align-items:center; gap:.7rem; flex-wrap:wrap; margin-bottom:.55rem; }
+  .restool .count{ font-size:.82rem; color:var(--content-muted); }
+  .restool .count b{ color:var(--content-strong); }
+
+  /* ---- table niceties ---- */
+  .grid-wrap{ overflow:auto; }
+  .sub{ font-size:.72rem; color:var(--content-muted); }
+  .route{ font-weight:700; color:var(--content-strong); }
+  .pin{ color:#f97316; cursor:pointer; }
+  .pin.on{ color:#f97316; }
+  .delay-pos{ color:var(--err-ink); font-weight:800; }
+  .delay-neg{ color:var(--ok-ink); font-weight:800; }
+  .delay-zero{ color:var(--content-subtle); font-weight:700; }
+  .modeic{ width:1.6rem;height:1.6rem;border-radius:.45rem;display:inline-flex;align-items:center;justify-content:center; }
+
+  .pager{ display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap; padding-top:.9rem; }
+  .pager .pages{ display:flex; gap:.3rem; }
+  .pager .pages button{ min-width:2rem;height:2rem;border-radius:.5rem;border:1px solid var(--border);background:var(--surface-card);
+    color:var(--content); font-weight:700; font-size:.8rem; cursor:pointer; }
+  .pager .pages button.on{ background:var(--p-primary-color); color:#fff; border-color:var(--p-primary-color); }
+
+  /* ---- mobile sidebar ---- */
+  .scrim{ position:fixed; inset:0; background:rgb(2 6 23 / .5); z-index:40; display:none; }
+  .menu-btn{ display:flex; }
+
+  /* ===== Responsive — tablet & below: sidebar becomes off-canvas drawer ===== */
+  @media(max-width:1024px){
+    .app, .app.rail{ grid-template-columns:1fr !important; grid-template-areas:"header" "main" "footer" !important; }
+    .sidenav{ position:fixed; top:0; bottom:0; left:0; width:var(--nav-w); z-index:50; transform:translateX(-105%); transition:var(--ease); overflow-y:auto; }
+    .app.nav-open .sidenav{ transform:none; }
+    .app.nav-open .scrim{ display:block; }
+    .menu-btn{ display:flex; }
+    .app-main{ padding:1rem; }
+    /* drawer always shows full labels/submenus even if rail was left on */
+    .sidenav .nav-label, .sidenav .nav-group, .sidenav .brand-text, .sidenav .nav-count, .sidenav .nav-caret{ display:revert !important; }
+  }
+
+  /* ===== Phone: condense header & filters ===== */
+  @media(max-width:760px){
+    .app-header{ gap:.45rem; padding:0 .6rem; }
+    .app-header .crumb{ display:none; }
+    .app-header .searchbar{ width:2.25rem; min-width:0; max-width:none; flex:none; padding:0; justify-content:center; }
+    .app-header .searchbar .s-text, .app-header .searchbar .kbd{ display:none; }
+    .filterbar{ gap:.5rem; padding:.75rem .8rem; }
+    .seg button{ padding:.3rem .6rem; }
+    .restool{ gap:.5rem; }
+    .restool .badge{ display:none; }
+  }
+
+  /* ===== Small phone: drop nice-to-haves, tighten ===== */
+  @media(max-width:460px){
+    .app-main{ padding:.7rem; }
+    .app-header .add-btn{ display:none; }
+    .app-header .usermenu .uchev{ display:none; }
+    .kpi .v{ font-size:1.4rem; }
+    .pop{ width:min(92vw,340px); }
+  }
+
+  /* ============================================================
+     APP-MAIN MODERNIZATION — page header, compact KPI cards,
+     collapsible advanced filters, richer results toolbar / pager.
+     Token-only; no invented hex.
+     ============================================================ */
+
+  /* ---- compact KPI cards: icon left · title above value (right) ---- */
+  .kpi{ display:flex; flex-direction:row; align-items:center; gap:.85rem; }
+  .kpi .ico{ flex:none; }
+  .kpi-body{ min-width:0; display:flex; flex-direction:column; gap:.1rem; }
+  .kpi-body .lab{ margin:0; }
+  .kpi-body .v{ margin:0; line-height:1.1; }
+  /* selected KPI: crisp brand outline + faint tint + top accent bar */
+  .kpi.on{ background:color-mix(in srgb,var(--p-primary-color) 5%,var(--surface-card));
+    /* box-shadow:0 0 0 1px var(--p-primary-color), var(--shadow-1); */
+   }
+  .kpi.on:hover{ 
+    /* box-shadow:0 0 0 1px var(--p-primary-color), var(--shadow-2); transform:translateY(-1px);  */
+  }
+  .kpi.on::after{ content:""; position:absolute; left:0; right:0; top:0; height:3px;
+    background:linear-gradient(90deg,var(--p-primary-color),var(--p-accent)); }
+
+  /* ---- collapsible advanced filters ---- */
+  .adv-filters{ display:none; }
+  .adv-filters.open{ display:flex; flex-direction:column; gap:.85rem; animation:subIn .22s ease; }
+  .adv-toggle{ margin-left:auto; }
+  .adv-toggle .chev{ width:.95rem; height:.95rem; transition:transform .22s ease; }
+  .adv-toggle.open .chev{ transform:rotate(180deg); }
+
+  /* ---- results: view switch + pager polish ---- */
+  .restool .vswitch button i{ width:.95rem; height:.95rem; }
+  .pager .pages button{ transition:var(--ease); }
+  .pager .pages button:not(.on):hover{ background:var(--surface-100); border-color:var(--border-strong); }
+
+  /* ============================================================
+     ENTERPRISE STATUS BADGES
+     Muted in-hue fills, hairline borders, consistent status dots.
+     Scoped to .app-main; light + dark parity via tokens/color-mix.
+     ============================================================ */
+
+  /* ---- status badges: softer fill + hairline border in the same hue ---- */
+  .app-main .badge{
+    gap:.4rem; padding:.28rem .6rem; font-size:.715rem; font-weight:700;
+    letter-spacing:.005em; border-radius:9999px; border-width:1px; line-height:1;
+  }
+  .app-main .b-ok{    background:color-mix(in srgb,var(--ok-soft) 60%,var(--surface-card));
+    color:var(--ok-ink);     border-color:color-mix(in srgb,var(--ok-ink) 24%,transparent); }
+  .app-main .b-info{  background:color-mix(in srgb,var(--info-soft) 60%,var(--surface-card));
+    color:var(--info-ink);   border-color:color-mix(in srgb,var(--info-ink) 24%,transparent); }
+  .app-main .b-warn{  background:color-mix(in srgb,var(--warn-soft) 60%,var(--surface-card));
+    color:var(--warn-ink);   border-color:color-mix(in srgb,var(--warn-ink) 26%,transparent); }
+  .app-main .b-err{   background:color-mix(in srgb,var(--err-soft) 60%,var(--surface-card));
+    color:var(--err-ink);    border-color:color-mix(in srgb,var(--err-ink) 26%,transparent); }
+  .app-main .b-neutral{ background:color-mix(in srgb,var(--neutral-soft) 70%,var(--surface-card));
+    color:var(--neutral-ink); border-color:color-mix(in srgb,var(--neutral-ink) 22%,transparent); }
+  .app-main .b-purple{ background:color-mix(in srgb,var(--purple-soft) 60%,var(--surface-card));
+    color:var(--purple-ink); border-color:color-mix(in srgb,var(--purple-ink) 24%,transparent); }
+  /* status dot: crisper, with a faint same-hue ring */
+  .app-main .b-dot::before{ width:.4rem; height:.4rem;
+    box-shadow:0 0 0 2px color-mix(in srgb,currentColor 15%,transparent); }
+</style>
+</head>
+<body>
+
+<div class="app" id="app">
+
+  <!-- ============ SIDEBAR (colored brand chrome) ============ -->
+  <aside class="sidenav">
+    <div class="brand">
+      <span class="brand-mark">C</span>
+      <span class="brand-text">CargoStar <span class="v">·</span> <span class="font-semibold opacity-[.85]">Freight</span></span>
+    </div>
+
+    <nav class="nav-scroll">
+    <div class="nav-group">Operations</div>
+    <div class="nav-cell">
+      <a class="nav-item on" data-page="Dashboard"><i data-lucide="layout-dashboard"></i><span class="nav-label">Dashboard</span></a>
+      <span class="rail-tip">Dashboard</span>
+    </div>
+
+    <div class="nav-cell">
+      <a class="nav-item has-sub" data-sub="shipments"><i data-lucide="package"></i><span class="nav-label">Shipments</span><span class="nav-count">128</span><i class="nav-caret" data-lucide="chevron-down"></i></a>
+      <div class="submenu" data-for="shipments">
+        <div class="fly-head">Shipments</div>
+        <a class="subitem" data-page="All Shipments"><span class="si"><i data-lucide="layers"></i></span><span class="si-label">All Shipments</span><span class="si-count">128</span></a>
+        <a class="subitem" data-page="FCL · Full Container"><span class="si"><i data-lucide="container"></i></span><span class="si-label">FCL · Full Container</span><span class="si-count">64</span></a>
+        <a class="subitem" data-page="LCL · Consolidated"><span class="si"><i data-lucide="boxes"></i></span><span class="si-label">LCL · Consolidated</span><span class="si-count">48</span></a>
+        <a class="subitem" data-page="Air Freight"><span class="si"><i data-lucide="plane"></i></span><span class="si-label">Air Freight</span><span class="si-count">22</span></a>
+        <a class="subitem" data-page="Ocean Freight"><span class="si"><i data-lucide="ship"></i></span><span class="si-label">Ocean Freight</span><span class="si-count">106</span></a>
+      </div>
+    </div>
+
+    <div class="nav-cell">
+      <a class="nav-item" data-page="Tracking"><i data-lucide="radar"></i><span class="nav-label">Tracking</span></a>
+      <span class="rail-tip">Tracking</span>
+    </div>
+
+    <div class="nav-cell">
+      <a class="nav-item has-sub" data-sub="bookings"><i data-lucide="calendar-plus"></i><span class="nav-label">Bookings</span><span class="nav-count">6</span><i class="nav-caret" data-lucide="chevron-down"></i></a>
+      <div class="submenu" data-for="bookings">
+        <div class="fly-head">Bookings</div>
+        <a class="subitem" data-page="New Booking"><span class="si"><i data-lucide="plus-circle"></i></span><span class="si-label">New Booking</span></a>
+        <a class="subitem" data-page="Draft Bookings"><span class="si"><i data-lucide="file-pen-line"></i></span><span class="si-label">Drafts</span><span class="si-count">3</span></a>
+        <a class="subitem" data-page="Booking Templates"><span class="si"><i data-lucide="layout-template"></i></span><span class="si-label">Templates</span></a>
+      </div>
+    </div>
+
+    <div class="nav-cell">
+      <a class="nav-item has-sub" data-sub="quotes"><i data-lucide="file-text"></i><span class="nav-label">Quotes &amp; RFQ</span><i class="nav-caret" data-lucide="chevron-down"></i></a>
+      <div class="submenu" data-for="quotes">
+        <div class="fly-head">Quotes &amp; RFQ</div>
+        <a class="subitem" data-page="Request a Quote"><span class="si"><i data-lucide="file-plus-2"></i></span><span class="si-label">Request a Quote</span></a>
+        <a class="subitem" data-page="Compare Quotes"><span class="si"><i data-lucide="git-compare-arrows"></i></span><span class="si-label">Compare Quotes</span></a>
+        <a class="subitem" data-page="Saved Quotes"><span class="si"><i data-lucide="bookmark"></i></span><span class="si-label">Saved Quotes</span><span class="si-count">5</span></a>
+      </div>
+    </div>
+
+    <div class="nav-group">Records</div>
+    <div class="nav-cell">
+      <a class="nav-item has-sub" data-sub="documents"><i data-lucide="folder"></i><span class="nav-label">Documents</span><i class="nav-caret" data-lucide="chevron-down"></i></a>
+      <div class="submenu" data-for="documents">
+        <div class="fly-head">Documents</div>
+        <a class="subitem" data-page="Bills of Lading"><span class="si"><i data-lucide="scroll-text"></i></span><span class="si-label">Bills of Lading</span></a>
+        <a class="subitem" data-page="Commercial Invoices"><span class="si"><i data-lucide="receipt"></i></span><span class="si-label">Commercial Invoices</span></a>
+        <a class="subitem" data-page="Certificates &amp; Permits"><span class="si"><i data-lucide="badge-check"></i></span><span class="si-label">Certificates &amp; Permits</span></a>
+      </div>
+    </div>
+    <div class="nav-cell">
+      <a class="nav-item" data-page="Customers"><i data-lucide="users"></i><span class="nav-label">Customers</span></a>
+      <span class="rail-tip">Customers</span>
+    </div>
+    <div class="nav-cell">
+      <a class="nav-item" data-page="Invoices"><i data-lucide="receipt"></i><span class="nav-label">Invoices</span></a>
+      <span class="rail-tip">Invoices</span>
+    </div>
+
+    <div class="nav-group">Insights</div>
+    <div class="nav-cell">
+      <a class="nav-item has-sub" data-sub="analytics"><i data-lucide="bar-chart-3"></i><span class="nav-label">Analytics</span><i class="nav-caret" data-lucide="chevron-down"></i></a>
+      <div class="submenu" data-for="analytics">
+        <div class="fly-head">Analytics</div>
+        <a class="subitem" data-page="Performance Overview"><span class="si"><i data-lucide="gauge"></i></span><span class="si-label">Performance Overview</span></a>
+        <a class="subitem" data-page="On-time Performance"><span class="si"><i data-lucide="timer"></i></span><span class="si-label">On-time Performance</span></a>
+        <a class="subitem" data-page="Volume &amp; Lanes"><span class="si"><i data-lucide="route"></i></span><span class="si-label">Volume &amp; Lanes</span></a>
+      </div>
+    </div>
+    <div class="nav-cell">
+      <a class="nav-item" data-page="Settings"><i data-lucide="settings"></i><span class="nav-label">Settings</span></a>
+      <span class="rail-tip">Settings</span>
+    </div>
+    </nav>
+
+    <div class="side-foot">
+      <span class="av">RS</span>
+      <div class="min-w-0">
+        <div class="text-[.8rem] font-extrabold whitespace-nowrap overflow-hidden text-ellipsis">Rahul Sharma</div>
+        <div class="text-[.7rem] opacity-70">Operations · Cargostar</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ============ HEADER (colored brand chrome) ============ -->
+  <header class="app-header">
+    <button class="hbtn menu-btn" id="menuBtn" title="Menu"><i data-lucide="menu"></i></button>
+
+    <div class="crumb">
+      <i data-lucide="home" class="w-[.9rem] h-[.9rem]"></i>
+      <span>CargoStar</span><span class="opacity-50">/</span><b id="crumbPage">Dashboard</b>
+    </div>
+
+    <!-- Header search input (commented out)
+    <div class="searchbar" style="margin-left:auto;max-width:340px;flex:1;">
+      <i data-lucide="search" style="width:1rem;height:1rem;"></i>
+      <span class="s-text" style="flex:1">Search shipment ID, PO, container…</span>
+      <span class="kbd">⌘K</span>
+    </div>
+    -->
+
+    <!-- New booking (+) button (commented out)
+    <button class="hbtn add-btn" title="New booking"><i data-lucide="plus"></i></button>
+    -->
+
+    <!-- Notification button (commented out)
+    <div style="position:relative;margin-left:auto;">
+      <button class="hbtn" id="notiBtn" title="Notifications"><i data-lucide="bell"></i><span class="dot"></span></button>
+      <div class="pop" id="notiPop" style="right:0;">
+        <div class="pop-h"><h4>Notifications</h4><span class="badge b-info">3 new</span></div>
+        <div class="noti"><span class="ic" style="background:var(--err-soft);color:var(--err-ink)"><i data-lucide="alert-triangle" style="width:1rem;height:1rem"></i></span><div><div class="t">CSE-2026-004821 delayed +2d</div><div class="s">MSC Diana · Shanghai → Los Angeles</div></div><span class="ago">12m</span></div>
+        <div class="noti"><span class="ic" style="background:var(--info-soft);color:var(--info-ink)"><i data-lucide="ship" style="width:1rem;height:1rem"></i></span><div><div class="t">CSE-2026-004803 departed</div><div class="s">ATD recorded · Rotterdam</div></div><span class="ago">1h</span></div>
+        <div class="noti"><span class="ic" style="background:var(--warn-soft);color:var(--warn-ink)"><i data-lucide="file-warning" style="width:1rem;height:1rem"></i></span><div><div class="t">Missing COO document</div><div class="s">CSE-2026-004790 · upload required</div></div><span class="ago">3h</span></div>
+        <div style="padding:.6rem 1rem;text-align:center;"><a class="btn-text" style="font-size:.8rem;font-weight:700;">View all activity</a></div>
+      </div>
+    </div>
+    -->
+
+    <button class="hbtn ml-auto" id="darkBtn" title="Toggle theme"><i data-lucide="moon"></i></button>
+
+    <div class="relative">
+      <button class="usermenu" id="userBtn"><span class="av">RS</span><span class="umeta"><span class="uname">Rahul Sharma</span><span class="urole">Operations</span></span><i class="uchev w-4 h-4" data-lucide="chevron-down"></i></button>
+      <div class="pop right-0 w-[230px]" id="userPop">
+        <div class="px-4 py-[.85rem] border-b"><div class="font-extrabold text-[.88rem] text-content-strong">Rahul Sharma</div><div class="text-[.76rem] text-content-muted">cargostario@gmail.com</div></div>
+        <div class="noti"><i data-lucide="user" class="w-4 h-4 text-content-muted"></i><span class="text-[.83rem] font-semibold">Profile</span></div>
+        <div class="noti"><i data-lucide="settings" class="w-4 h-4 text-content-muted"></i><span class="text-[.83rem] font-semibold">Preferences</span></div>
+        <div class="noti border-b-0"><i data-lucide="log-out" class="w-4 h-4 text-err"></i><span class="text-[.83rem] font-semibold text-err">Sign out</span></div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ============ MAIN (shipment dashboard — mirrors shipment-dashboard.component.html) ============ -->
+  <main class="app-main">
+
+    <!-- ===== PAGE HEADER (hero) ===== -->
+    <div class="flex flex-wrap items-end justify-between gap-4 mb-[1.15rem]">
+      <div class="min-w-0">
+        <h1 id="pageTitle" class="text-[1.45rem] font-extrabold tracking-tight max-[760px]:text-[1.2rem]">Shipment Dashboard</h1>
+        <p id="pageSub" class="mt-1 text-[.85rem] text-content-muted max-[760px]:text-[.8rem]">Live view of every active shipment across all trade lanes.</p>
+      </div>
+      <!-- <div class="flex flex-wrap items-center gap-2">
+        <button class="btn btn-primary btn-sm"><i data-lucide="plus" class="w-[.95rem] h-[.95rem]"></i> New Booking</button>
+      </div> -->
+    </div>
+
+    <!-- ===== KPI / stat cards ===== -->
+    <div class="kpis">
+      <div class="card kpi on" data-kpi="active" title="Active Shipments">
+        <span class="ico bg-info-soft text-info-ink"><i data-lucide="package" class="w-[1.2rem] h-[1.2rem]"></i></span>
+        <div class="kpi-body"><div class="lab">Active Shipments</div><div class="v">128</div></div>
+      </div>
+      <div class="card kpi" data-kpi="arriving" title="Arriving Next 7 Days">
+        <span class="ico bg-warn-soft text-warn-ink"><i data-lucide="calendar-days" class="w-[1.2rem] h-[1.2rem]"></i></span>
+        <div class="kpi-body"><div class="lab">Arriving Next 7 Days</div><div class="v">23</div></div>
+      </div>
+      <div class="card kpi" data-kpi="departing" title="Departing Next 7 Days">
+        <span class="ico bg-warn-soft text-warn-ink"><i data-lucide="calendar-days" class="w-[1.2rem] h-[1.2rem]"></i></span>
+        <div class="kpi-body"><div class="lab">Departing Next 7 Days</div><div class="v">17</div></div>
+      </div>
+      <div class="card kpi" data-kpi="delayed" title="Delayed">
+        <span class="ico bg-err-soft text-err-ink"><i data-lucide="alert-triangle" class="w-[1.2rem] h-[1.2rem]"></i></span>
+        <div class="kpi-body"><div class="lab">Delayed</div><div class="v neg">9</div></div>
+      </div>
+      <div class="card kpi" data-kpi="delivered" title="Delivered (30d)">
+        <span class="ico bg-ok-soft text-ok-ink"><i data-lucide="circle-check" class="w-[1.2rem] h-[1.2rem]"></i></span>
+        <div class="kpi-body"><div class="lab">Delivered (30d)</div><div class="v pos">214</div></div>
+      </div>
+    </div>
+
+    <!-- ===== FILTERS ===== -->
+    <div class="card filterbar flex-col items-stretch">
+      <!-- Mode + Status + advanced toggle -->
+      <div class="fl-row">
+        <span class="text-xs font-semibold text-slate-500 mr-[.1rem] max-[760px]:hidden">Mode</span>
+        <span class="chips" data-group="mode">
+          <span class="chip chip-on"><i data-lucide="asterisk" class="w-[.9rem] h-[.9rem]"></i> All</span>
+          <span class="chip"><i data-lucide="plane" class="w-[.9rem] h-[.9rem]"></i> AIR</span>
+          <span class="chip"><i data-lucide="ship" class="w-[.9rem] h-[.9rem]"></i> SEA</span>
+        </span>
+        <span class="text-xs font-semibold text-slate-500 mr-[.1rem] ml-[.4rem] max-[760px]:hidden">Status</span>
+        <span class="chips" data-group="status">
+          <span class="chip chip-on"><i data-lucide="asterisk" class="w-[.9rem] h-[.9rem]"></i> All</span>
+          <span class="chip"><i data-lucide="check" class="w-[.9rem] h-[.9rem]"></i> Active</span>
+          <span class="chip"><i data-lucide="circle-check" class="w-[.9rem] h-[.9rem]"></i> Delivered</span>
+          <span class="chip"><i data-lucide="alert-triangle" class="w-[.9rem] h-[.9rem]"></i> Delayed</span>
+        </span>
+        <button class="btn btn-ghost btn-sm adv-toggle" id="advToggle" type="button">
+          <i data-lucide="sliders-horizontal" class="w-[.95rem] h-[.95rem]"></i> Advanced
+          <i class="chev" data-lucide="chevron-down"></i>
+        </button>
+      </div>
+
+      <!-- Direction + date range -->
+      <div class="fl-row">
+        <span class="text-xs font-semibold text-slate-500 mr-[.1rem] max-[760px]:hidden">Direction</span>
+        <span class="chips" data-group="dir">
+          <span class="chip chip-on"><i data-lucide="asterisk" class="w-[.9rem] h-[.9rem]"></i> All</span>
+          <span class="chip"><i data-lucide="spline" class="w-[.9rem] h-[.9rem] rotate-45"></i> Foreign To Foreign</span>
+          <span class="chip"><i data-lucide="arrow-up" class="w-[.9rem] h-[.9rem]"></i> Export/Departing (ETD)</span>
+          <span class="chip"><i data-lucide="arrow-down" class="w-[.9rem] h-[.9rem]"></i> Import/Arriving (ETA)</span>
+        </span>
+        <span class="range ml-[.2rem]">
+          <input type="date" aria-label="Start date" /><span class="sep">→</span><input type="date" aria-label="End date" />
+        </span>
+      </div>
+
+      <!-- Advanced (collapsible): Type + entity lookups -->
+      <div class="adv-filters" id="advFilters">
+        <div class="fl-divider"></div>
+        <div class="fl-row">
+          <span class="text-xs font-semibold text-slate-500 mr-[.1rem] max-[760px]:hidden">Type</span>
+          <span class="chips" data-group="type">
+            <span class="chip chip-on"><i data-lucide="asterisk" class="w-[.9rem] h-[.9rem]"></i> All</span>
+            <span class="chip"><i data-lucide="box" class="w-[.9rem] h-[.9rem]"></i> FCL</span>
+            <span class="chip"><i data-lucide="package" class="w-[.9rem] h-[.9rem]"></i> LCL</span>
+          </span>
+          <div class="flex items-center gap-2 rounded-full border border-slate-200 bg-white pl-3 pr-2">
+            <i data-lucide="barcode" class="w-4 h-4 text-slate-500"></i>
+            <span class="text-xs font-semibold text-slate-500">Shipment ID</span>
+            <input type="text" name="shipmentId" placeholder="e.g. S0001006" class="ml-2 w-32 rounded-md border border-slate-200 px-2 py-1 text-sm transition hover:border-slate-300 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20" />
+            <button type="button" class="p-1 text-slate-500 hover:text-slate-700"><i data-lucide="x" class="w-4 h-4"></i></button>
+          </div>
+          <div class="flex items-center gap-2 rounded-full border border-slate-200 bg-white pl-3 pr-2 ">
+            <i data-lucide="file-digit" class="w-4 h-4 text-slate-500"></i>
+            <span class="text-xs font-semibold text-slate-500">PO #</span>
+            <input type="text" name="po" placeholder="Enter PO #" class="ml-2 w-32 rounded-md border border-slate-200 px-2 py-1 text-sm transition hover:border-slate-300 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20" />
+            <button type="button" class="p-1 text-slate-500 hover:text-slate-700"><i data-lucide="x" class="w-4 h-4"></i></button>
+          </div>
+          <div class="flex items-center gap-2 rounded-full border border-slate-200 bg-white pl-3 pr-2 ">
+            <i data-lucide="user" class="w-4 h-4 text-slate-500"></i>
+            <span class="text-xs font-semibold text-slate-500">Shipper</span>
+            <input type="text" name="shipper" placeholder="Enter Shipper" class="ml-2 w-32 rounded-md border border-slate-200 px-2 py-1 text-sm transition hover:border-slate-300 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20" />
+            <button type="button" class="p-1 text-slate-500 hover:text-slate-700"><i data-lucide="x" class="w-4 h-4"></i></button>
+          </div>
+          <div class="flex items-center gap-2 rounded-full border border-slate-200 bg-white pl-3 pr-2 ">
+            <i data-lucide="user" class="w-4 h-4 text-slate-500"></i>
+            <span class="text-xs font-semibold text-slate-500">Consignee</span>
+            <input type="text" name="consignee" placeholder="Enter Consignee" class="ml-2 w-32 rounded-md border border-slate-200 px-2 py-1 text-sm transition hover:border-slate-300 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20" />
+            <button type="button" class="p-1 text-slate-500 hover:text-slate-700"><i data-lucide="x" class="w-4 h-4"></i></button>
+          </div>
+          <div class="flex items-center gap-2 rounded-full border border-slate-200 bg-white pl-3 pr-2 ">
+            <i data-lucide="map-pin" class="w-4 h-4 text-slate-500"></i>
+            <span class="text-xs font-semibold text-slate-500">Origin</span>
+            <select name="origin" class="ml-2 w-40 rounded-md border border-slate-200 bg-white px-2 py-1 text-sm text-slate-700 transition hover:border-slate-300 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20">
+              <option value="">Any origin</option>
+              <option>Shanghai (CNSHA)</option>
+              <option>Rotterdam (NLRTM)</option>
+              <option>Busan (KRPUS)</option>
+              <option>Singapore (SGSIN)</option>
+              <option>Ningbo (CNNGB)</option>
+              <option>Hong Kong (HKG)</option>
+              <option>Dubai (DXB)</option>
+              <option>Antwerp (BEANR)</option>
+            </select>
+            <button type="button" class="p-1 text-slate-500 hover:text-slate-700"><i data-lucide="x" class="w-4 h-4"></i></button>
+          </div>
+          <div class="flex items-center gap-2 rounded-full border border-slate-200 bg-white pl-3 pr-2 ">
+            <i data-lucide="map-pin" class="w-4 h-4 text-slate-500"></i>
+            <span class="text-xs font-semibold text-slate-500">Destination</span>
+            <select name="destination" class="ml-2 w-40 rounded-md border border-slate-200 bg-white px-2 py-1 text-sm text-slate-700 transition hover:border-slate-300 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20">
+              <option value="">Any destination</option>
+              <option>Los Angeles (USLAX)</option>
+              <option>New York (USNYC)</option>
+              <option>Long Beach (USLGB)</option>
+              <option>Hamburg (DEHAM)</option>
+              <option>Chicago (ORD)</option>
+              <option>Houston (USHOU)</option>
+              <option>Rotterdam (NLRTM)</option>
+              <option>Felixstowe (GBFXT)</option>
+            </select>
+            <button type="button" class="p-1 text-slate-500 hover:text-slate-700"><i data-lucide="x" class="w-4 h-4"></i></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- CTAs -->
+      <div class="fl-row justify-end">
+        <button class="btn btn-ghost btn-sm"><i data-lucide="eraser" class="w-[.95rem] h-[.95rem]"></i> Clear All</button>
+        <button class="btn btn-primary btn-sm"><i data-lucide="search" class="w-[.95rem] h-[.95rem]"></i> Search</button>
+      </div>
+    </div>
+
+    <!-- ===== RESULTS ===== -->
+    <div class="card p-0">
+      <div class="restool px-4 py-[.85rem] border-b mb-0">
+        <span class="count inline-flex items-center gap-[.4rem]"><i data-lucide="list-checks" class="w-4 h-4"></i> Showing <b>17</b> of <b>128</b></span>
+        <span class="muted mx-[.2rem]">|</span>
+        <span class="muted">Sort: <b class="text-content-strong">ETA (asc)</b></span>
+        <div class="ml-auto flex items-center gap-[.6rem]">
+          
+          <button class="btn btn-ghost btn-sm"><i data-lucide="columns-2" class="w-[.95rem] h-[.95rem]"></i> Manage Columns</button>
+          <button class="btn btn-primary btn-sm"><i data-lucide="download" class="w-[.95rem] h-[.95rem]"></i> Export</button>
+        </div>
+      </div>
+
+      <div class="grid-wrap h-[47vh]">
+        <table class="grid-table">
+          <thead>
+            <tr>
+              <th>Shipment</th>
+              <th>Mode / Status</th>
+              <th>Origin → Destination</th>
+              <th>Type</th>
+              <th>Direction</th>
+              <th class="min-w-[170px]"><span class="th-sort">ETD/ATD <i data-lucide="arrow-up-narrow-wide"></i></span></th>
+              <th class="min-w-[170px]"><span class="th-sort">ETA/ATA <i data-lucide="arrow-up-narrow-wide"></i></span></th>
+              <th>Consignee</th>
+              <th>Shipper</th>
+            </tr>
+          </thead>
+          <tbody id="rows"><!-- injected --></tbody>
+        </table>
+      </div>
+
+      <div class="pager px-4 py-[.9rem]">
+        <span class="count">15 per page</span>
+        <div class="pages">
+          <button><i data-lucide="chevron-left" class="w-[.9rem] h-[.9rem]"></i></button>
+          <button class="on">1</button><button>2</button><button>3</button>
+          <span class="muted px-[.3rem]">…</span><button>9</button>
+          <button><i data-lucide="chevron-right" class="w-[.9rem] h-[.9rem]"></i></button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ============ FOOTER ============ -->
+  <footer class="app-footer">
+    <span>© 2026 CargoStar Logistics</span>
+    <span class="opacity-60">·</span><span>v2 preview shell</span>
+    <span class="ml-auto flex gap-4">
+      <a class="muted" href="#">Support</a><a class="muted" href="#">API status</a><a class="muted" href="#">Privacy</a>
+    </span>
+  </footer>
+
+  <div class="scrim" id="scrim"></div>
+</div>
+
+<script>
+  /* ---- cell renderers (mirror shipment-dashboard.component.html) ---- */
+  const modeBadge = (m)=>{
+    const sea = (m||'').toLowerCase().includes('sea');
+    return `<span class="badge b-info"><i data-lucide="${sea?'ship':'plane'}" class="w-[.85rem] h-[.85rem]"></i> ${m}</span>`;
+  };
+  const statusBadge = (s)=>{
+    const k=(s||'').toLowerCase();
+    // terminal states → check icon (ok hue)
+    if(k.includes('deliver'))  return '<span class="badge b-ok"><i data-lucide="circle-check-big" class="w-[.85rem] h-[.85rem]"></i> Delivered</span>';
+    if(k.includes('complete')) return '<span class="badge b-ok"><i data-lucide="circle-check-big" class="w-[.85rem] h-[.85rem]"></i> Completed</span>';
+    // attention / live states → status dot
+    if(k.includes('delay'))    return '<span class="badge b-err b-dot pulse"><span></span>Delayed</span>';
+    if(k.includes('pending'))  return '<span class="badge b-warn b-dot"><span></span>Pending</span>';
+    if(k.includes('transit'))  return '<span class="badge b-info b-dot"><span></span>In Transit</span>';
+    return `<span class="badge b-info b-dot"><span></span>${s}</span>`; // Active (default)
+  };
+  const typeBadge = (t)=> `<span class="badge b-info"><i data-lucide="${t==='FCL'?'box':'package'}" class="w-[.85rem] h-[.85rem]"></i> ${t}</span>`;
+  const dirBadge = (d)=>{
+    const map={Export:['arrow-up','Export'],Import:['arrow-down','Import'],F2F:['spline','Foreign To Foreign']};
+    const [ic,label]=map[d]||['asterisk',d];
+    const rot = d==='F2F' ? 'rotate-45' : '';
+    return `<span class="badge b-info"><i data-lucide="${ic}" class="w-[.85rem] h-[.85rem] ${rot}"></i> ${label}</span>`;
+  };
+  const dateCell = (date, actual, delay, label)=>{
+    const atag = actual ? `<span class="badge b-ok text-[.6rem] px-[.3rem] py-[.1rem]">${label}</span>` : '';
+    let dly='';
+    if(delay>0) dly=`<span class="text-err-ink ">(+${delay} days)</span>`;
+    else if(delay<0) dly=`<span class="text-ok-ink ">(${delay} days)</span>`;
+    return `<div class="flex items-center gap-[.35rem] flex-nowrap whitespace-nowrap"><i data-lucide="calendar" class="w-[.85rem] h-[.85rem] text-info shrink-0"></i><span class="mono">${date}</span>${atag}${dly}</div>`;
+  };
+
+  const data = [
+    {id:'CSE-2026-004821',po:'PO-77310',mode:'Sea',st:'Delayed',o:'Shanghai',oc:'CNSHA',d:'Los Angeles',dc:'USLAX',type:'FCL',dir:'Export',etd:'12 May',etda:1,etdd:0,eta:'02 Jun',etaa:0,etad:2,cons:'Pacific Imports LLC',ship:'Shenzhen Textiles Co.',pin:true},
+    {id:'CSE-2026-004803',po:'PO-77298',mode:'Sea',st:'Active',o:'Rotterdam',oc:'NLRTM',d:'New York',dc:'USNYC',type:'FCL',dir:'Import',etd:'18 May',etda:1,etdd:0,eta:'05 Jun',etaa:0,etad:0,cons:'Atlantic Trading',ship:'Bavaria GmbH',pin:false},
+    {id:'CSE-2026-004790',po:'PO-77265',mode:'Air',st:'Active',o:'Frankfurt',oc:'FRA',d:'Chicago',dc:'ORD',type:'LCL',dir:'Import',etd:'24 May',etda:1,etdd:0,eta:'26 May',etaa:0,etad:0,cons:'Midwest Components',ship:'Deutsche Pharma AG',pin:false},
+    {id:'CSE-2026-004777',po:'PO-77241',mode:'Sea',st:'Active',o:'Busan',oc:'KRPUS',d:'Long Beach',dc:'USLGB',type:'FCL',dir:'Export',etd:'20 May',etda:1,etdd:0,eta:'07 Jun',etaa:0,etad:-1,cons:'West Coast Auto',ship:'Hyundai Mobis',pin:false},
+    {id:'CSE-2026-004769',po:'PO-77230',mode:'Air',st:'Delivered',o:'Dubai',oc:'DXB',d:'London',dc:'LHR',type:'LCL',dir:'F2F',etd:'08 May',etda:1,etdd:0,eta:'09 May',etaa:1,etad:0,cons:'Knightsbridge Retail',ship:'Emirates Gold DMCC',pin:false},
+    {id:'CSE-2026-004752',po:'PO-77215',mode:'Sea',st:'Delayed',o:'Singapore',oc:'SGSIN',d:'Hamburg',dc:'DEHAM',type:'FCL',dir:'F2F',etd:'02 May',etda:1,etdd:1,eta:'01 Jun',etaa:0,etad:3,cons:'Nordic Distribution',ship:'Sime Darby Oils',pin:true},
+    {id:'CSE-2026-004741',po:'PO-77198',mode:'Sea',st:'Active',o:'Ningbo',oc:'CNNGB',d:'Oakland',dc:'USOAK',type:'FCL',dir:'Export',etd:'21 May',etda:1,etdd:0,eta:'09 Jun',etaa:0,etad:0,cons:'BayArea Goods',ship:'Ningbo Joyson',pin:false},
+    {id:'CSE-2026-004733',po:'PO-77186',mode:'Air',st:'Active',o:'Hong Kong',oc:'HKG',d:'Atlanta',dc:'ATL',type:'LCL',dir:'Import',etd:'25 May',etda:0,etdd:0,eta:'27 May',etaa:0,etad:0,cons:'Peachtree Tech',ship:'HK Electronics Ltd',pin:false},
+    {id:'CSE-2026-004720',po:'PO-77170',mode:'Sea',st:'Delivered',o:'Antwerp',oc:'BEANR',d:'Houston',dc:'USHOU',type:'FCL',dir:'Import',etd:'01 May',etda:1,etdd:0,eta:'21 May',etaa:1,etad:-2,cons:'Gulf Chemicals',ship:'BASF Antwerpen',pin:false},
+    {id:'CSE-2026-004712',po:'PO-77154',mode:'Sea',st:'Active',o:'Yokohama',oc:'JPYOK',d:'Seattle',dc:'USSEA',type:'FCL',dir:'Export',etd:'23 May',etda:1,etdd:0,eta:'06 Jun',etaa:0,etad:0,cons:'Cascade Imports',ship:'Mitsui Trading',pin:false},
+    {id:'CSE-2026-004705',po:'PO-77142',mode:'Air',st:'Delayed',o:'Shenzhen',oc:'SZX',d:'Memphis',dc:'MEM',type:'LCL',dir:'Export',etd:'19 May',etda:1,etdd:1,eta:'22 May',etaa:0,etad:2,cons:'FedEx Logistics',ship:'DJI Technology',pin:false},
+    {id:'CSE-2026-004698',po:'PO-77131',mode:'Sea',st:'Active',o:'Qingdao',oc:'CNTAO',d:'Savannah',dc:'USSAV',type:'FCL',dir:'Export',etd:'17 May',etda:1,etdd:0,eta:'11 Jun',etaa:0,etad:0,cons:'Southeast Retail',ship:'Hisense Group',pin:false},
+    {id:'CSE-2026-004690',po:'PO-77119',mode:'Sea',st:'Delivered',o:'Le Havre',oc:'FRLEH',d:'Norfolk',dc:'USORF',type:'FCL',dir:'Import',etd:'28 Apr',etda:1,etdd:0,eta:'19 May',etaa:1,etad:-1,cons:'Dominion Foods',ship:'L\'Oréal SA',pin:false},
+    {id:'CSE-2026-004682',po:'PO-77104',mode:'Air',st:'Active',o:'Tokyo',oc:'NRT',d:'San Francisco',dc:'SFO',type:'LCL',dir:'Import',etd:'25 May',etda:0,etdd:0,eta:'26 May',etaa:0,etad:0,cons:'Valley Semiconductors',ship:'Sony Corporation',pin:true},
+    {id:'CSE-2026-004671',po:'PO-77093',mode:'Sea',st:'Active',o:'Jebel Ali',oc:'AEJEA',d:'Rotterdam',dc:'NLRTM',type:'FCL',dir:'F2F',etd:'14 May',etda:1,etdd:0,eta:'03 Jun',etaa:0,etad:0,cons:'Euro Petrochem',ship:'ADNOC Distribution',pin:false},
+    {id:'CSE-2026-004663',po:'PO-77081',mode:'Sea',st:'Delayed',o:'Mumbai',oc:'INNSA',d:'Felixstowe',dc:'GBFXT',type:'LCL',dir:'Export',etd:'10 May',etda:1,etdd:2,eta:'04 Jun',etaa:0,etad:4,cons:'Britannia Imports',ship:'Tata Exports Ltd',pin:false},
+    {id:'CSE-2026-004655',po:'PO-77070',mode:'Air',st:'Delivered',o:'Seoul',oc:'ICN',d:'Dallas',dc:'DFW',type:'LCL',dir:'Import',etd:'06 May',etda:1,etdd:0,eta:'07 May',etaa:1,etad:0,cons:'Lone Star Tech',ship:'Samsung SDS',pin:false},
+  ];
+
+  function renderRows(){
+    document.getElementById('rows').innerHTML = data.map(r=>`
+      <tr>
+        <td>
+          <div class="flex items-center gap-2">
+            <i data-lucide="pin" class="pin ${r.pin?'on':''} w-[.95rem] h-[.95rem] ${r.pin?'fill-current':''}"></i>
+            <div class="min-w-0">
+              <a href="#" class="text-sm font-bold tracking-tight text-[color:var(--p-primary-color)] hover:underline underline-offset-2 cursor-pointer whitespace-nowrap transition-colors">${r.id}</a>
+              <div class="sub">${r.po}</div>
+            </div>
+          </div>
+        </td>
+        <td><div class="flex items-center gap-[.4rem]">${modeBadge(r.mode)} ${statusBadge(r.st)}</div></td>
+        <td><div class="flex items-center gap-[.4rem]"><span class="">${r.o} <span class="muted mono">(${r.oc})</span></span> <i data-lucide="arrow-right" class="w-[.85rem] h-[.85rem] text-content-subtle"></i><span class="">${r.d} <span class="muted mono">(${r.dc})</span></span></div></td>
+        <td>${typeBadge(r.type)}</td>
+        <td>${dirBadge(r.dir)}</td>
+        <td>${dateCell(r.etd, r.etda, r.etdd, 'ATD')}</td>
+        <td>${dateCell(r.eta, r.etaa, r.etad, 'ATA')}</td>
+        <td>${r.cons}</td>
+        <td>${r.ship}</td>
+      </tr>`).join('');
+    refresh();
+  }
+
+  /* ---- interactions ---- */
+  const refresh = ()=> window.lucide && lucide.createIcons();
+  const html = document.documentElement;
+  const app = document.getElementById('app');
+
+  // page heading + breadcrumb
+  function setActivePage(page){
+    const crumb=document.getElementById('crumbPage'); if(crumb) crumb.textContent = page;
+    const t=document.getElementById('pageTitle'); if(t) t.textContent = page==='Dashboard' ? 'Shipment Dashboard' : page;
+    const s=document.getElementById('pageSub'); if(s) s.textContent = page==='Dashboard'
+      ? 'Live view of every active shipment across all trade lanes.'
+      : `${page} — shown over the shipment dashboard for this preview.`;
+  }
+  function clearActive(){
+    document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('on','parent-on'));
+    document.querySelectorAll('.subitem').forEach(x=>x.classList.remove('on'));
+  }
+
+  // nav items: parents expand/collapse their submenu; leaves navigate
+  // accordion: collapse every open parent group except (optionally) one to keep
+  function collapseParents(except){
+    document.querySelectorAll('.nav-item.has-sub.open').forEach(x=>{ if(x!==except) x.classList.remove('open'); });
+    document.querySelectorAll('.submenu.open').forEach(x=>{ if(!except || x.dataset.for!==except.dataset.sub) x.classList.remove('open'); });
+  }
+
+  document.querySelectorAll('.nav-item').forEach(n=>{
+    n.addEventListener('click', ()=>{
+      if(n.classList.contains('has-sub')){
+        // accordion toggle — only one group open at a time; never force the rail open
+        const sub = document.querySelector('.submenu[data-for="'+n.dataset.sub+'"]');
+        const willOpen = !n.classList.contains('open');
+        collapseParents(n);
+        n.classList.toggle('open', willOpen);
+        if(sub) sub.classList.toggle('open', willOpen);
+        refresh();
+        return;
+      }
+      clearActive();
+      n.classList.add('on');
+      collapseParents(null);   // navigating to a leaf collapses any open group
+      setActivePage(n.dataset.page);
+      app.classList.remove('nav-open');
+      refresh();
+    });
+  });
+
+  // sub-items navigate and highlight their parent
+  document.querySelectorAll('.subitem').forEach(s=>{
+    s.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      clearActive();
+      s.classList.add('on');
+      const sub = s.closest('.submenu');
+      const parent = sub?.previousElementSibling;
+      if(parent && parent.classList.contains('nav-item')){
+        parent.classList.add('parent-on');
+        collapseParents(parent);          // accordion: keep only this group open
+        parent.classList.add('open');
+        if(sub) sub.classList.add('open');
+      }
+      setActivePage(s.dataset.page);
+      app.classList.remove('nav-open');
+      refresh();
+    });
+  });
+
+  // collapsed-rail leaf tooltip: clicking it navigates via its icon
+  document.querySelectorAll('.rail-tip').forEach(t=>{
+    t.addEventListener('click', (e)=>{ e.stopPropagation(); t.parentElement.querySelector('.nav-item')?.click(); });
+  });
+
+  // crossing into mobile width: drop rail so the drawer shows full labels
+  window.addEventListener('resize', ()=>{ if(window.innerWidth<=1024) app.classList.remove('rail'); });
+
+  // segmented filters
+  document.querySelectorAll('.seg').forEach(seg=>{
+    seg.querySelectorAll('button').forEach(b=>{
+      b.addEventListener('click', ()=>{ seg.querySelectorAll('button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); });
+    });
+  });
+
+  // advanced filters: collapse/expand the entity lookups
+  const advToggle=document.getElementById('advToggle'), advFilters=document.getElementById('advFilters');
+  if(advToggle && advFilters){
+    advToggle.addEventListener('click', ()=>{
+      const open = advFilters.classList.toggle('open');
+      advToggle.classList.toggle('open', open);
+      refresh();
+    });
+  }
+
+  // filter pill groups (Mode / Status / Direction / Type) — single select per group
+  document.querySelectorAll('.chips').forEach(group=>{
+    group.querySelectorAll('.chip').forEach(c=>{
+      c.addEventListener('click', ()=>{ group.querySelectorAll('.chip').forEach(x=>x.classList.remove('chip-on')); c.classList.add('chip-on'); });
+    });
+  });
+
+  // KPI selection — single-select, click the active card again to clear
+  document.querySelectorAll('.kpi').forEach(k=>{
+    k.setAttribute('aria-pressed', k.classList.contains('on') ? 'true' : 'false');
+    k.addEventListener('click', ()=>{
+      const wasOn = k.classList.contains('on');
+      document.querySelectorAll('.kpi').forEach(x=>{ x.classList.remove('on'); x.setAttribute('aria-pressed','false'); });
+      if(!wasOn){ k.classList.add('on'); k.setAttribute('aria-pressed','true'); }
+    });
+  });
+
+  // popovers
+  function wirePop(btnId, popId){
+    const btn=document.getElementById(btnId), pop=document.getElementById(popId);
+    if(!btn || !pop) return;   // element may be commented out
+    btn.addEventListener('click',(e)=>{ e.stopPropagation(); document.querySelectorAll('.pop').forEach(p=>{ if(p!==pop) p.classList.remove('on'); }); pop.classList.toggle('on'); });
+  }
+  wirePop('notiBtn','notiPop'); wirePop('userBtn','userPop');
+  document.addEventListener('click', ()=> document.querySelectorAll('.pop').forEach(p=>p.classList.remove('on')));
+  document.querySelectorAll('.pop').forEach(p=>p.addEventListener('click',e=>e.stopPropagation()));
+
+  // hamburger: collapse/expand the sidebar (icon rail on desktop, drawer on mobile)
+  document.getElementById('menuBtn').addEventListener('click', ()=>{
+    if(window.innerWidth > 1024){
+      app.classList.toggle('rail');
+      if(app.classList.contains('rail')){ // collapsing → close any open submenus
+        document.querySelectorAll('.nav-item.open').forEach(x=>x.classList.remove('open'));
+        document.querySelectorAll('.submenu.open').forEach(x=>x.classList.remove('open'));
+      }
+    } else {
+      app.classList.toggle('nav-open');
+    }
+    refresh();
+  });
+  document.getElementById('scrim').addEventListener('click', ()=> app.classList.remove('nav-open'));
+
+  // dark toggle
+  const darkBtn=document.getElementById('darkBtn');
+  function setDarkIcon(){ darkBtn.innerHTML = '<i data-lucide="'+(html.classList.contains('dark')?'sun':'moon')+'"></i>'; refresh(); }
+  darkBtn.addEventListener('click', ()=>{ html.classList.toggle('dark'); setDarkIcon(); });
+
+  renderRows(); setDarkIcon(); refresh();
+</script>
+</body>
+</html>

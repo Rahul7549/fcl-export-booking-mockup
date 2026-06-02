@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Cargostar — Shipment Quote Experience · Interactive Mockups</title>
-<meta name="description" content="Interactive UI/UX prototypes for the Cargostar shipment quote experience — FCL Export, Air Export, and the quote comparison results screen." />
+<meta name="description" content="Interactive UI/UX prototypes for the Cargostar shipment experience — the branded application shell &amp; shipment dashboard, FCL Export, Air Export, and the quote comparison results screen." />
 
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
@@ -96,13 +96,15 @@
     <p class="mt-3 text-white/80 max-w-2xl text-[.95rem] leading-relaxed">A set of clickable, production-quality mockups for the Cargostar shipment quote journey — from booking request to carrier comparison. Every screen shares one brand system, so any direction can ship without losing visual consistency.</p>
 
     <div class="mt-6 flex flex-wrap gap-2.5">
-      <span class="stat"><i data-lucide="layout-dashboard" class="w-4 h-4 text-white/80"></i> 4 interactive screens</span>
+      <span class="stat"><i data-lucide="layout-dashboard" class="w-4 h-4 text-white/80"></i> 5 interactive screens</span>
       <span class="stat"><i data-lucide="smartphone" class="w-4 h-4 text-white/80"></i> Desktop · tablet · mobile</span>
+      <span class="stat"><i data-lucide="moon" class="w-4 h-4 text-white/80"></i> Light &amp; dark theme</span>
       <span class="stat"><i data-lucide="palette" class="w-4 h-4 text-white/80"></i> One shared design system</span>
     </div>
 
     <div class="mt-7 flex flex-wrap gap-3">
-      <a href="air-export/mockup/air-export-quote-request.html" class="btn btn-primary"><i data-lucide="plane-takeoff" class="w-4 h-4"></i> Open Air Export RFQ <span class="tag tag-new ml-1">New</span></a>
+      <a href="v4-theme/index.html" class="btn btn-primary"><i data-lucide="layout-dashboard" class="w-4 h-4"></i> Open Branded Shell <span class="tag tag-new ml-1">New</span></a>
+      <a href="air-export/mockup/air-export-quote-request.html" class="btn btn-light"><i data-lucide="plane-takeoff" class="w-4 h-4"></i> Open Air Export RFQ</a>
       <a href="fcl-export-booking.html" class="btn btn-light"><i data-lucide="ship" class="w-4 h-4"></i> Open FCL Wizard</a>
     </div>
   </div>
@@ -123,11 +125,44 @@
 
 <main class="mx-auto max-w-6xl px-4 py-10 space-y-12">
 
+  <!-- ============ SPOTLIGHT: Branded Shell — Shipment Dashboard ============ -->
+  <section>
+    <div class="flex items-center gap-2 mb-3">
+      <span class="tag tag-sea"><i data-lucide="layout-dashboard" class="w-3 h-3"></i> Branded Shell</span>
+      <span class="sec-eyebrow">Latest addition · full application theme</span>
+    </div>
+    <a href="v4-theme/index.html" class="gcard">
+      <div class="grid md:grid-cols-2">
+        <div class="thumb order-1 md:order-none">
+          <div class="thumb-bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="url">cargostar · v4-theme/index.html</span></div>
+          <div class="thumb-view tall"><iframe src="v4-theme/index.html" loading="lazy" scrolling="no" tabindex="-1" title="Branded Shell — Shipment Dashboard preview"></iframe>
+            <div class="open"><span class="pillbtn"><i data-lucide="external-link" class="w-4 h-4"></i> Open mockup</span></div>
+          </div>
+        </div>
+        <div class="p-6 sm:p-7 flex flex-col">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="tag tag-sea">Theme V4 · App Shell</span>
+            <span class="tag tag-new">New</span>
+          </div>
+          <h2 class="mt-3 text-xl font-extrabold text-ink">Branded Shell — Shipment Dashboard</h2>
+          <p class="mt-2 text-sm text-muted leading-relaxed">The full application frame around the quote flows: colored brand chrome with a collapsible sidebar rail (hover fly-out menus) and sticky header, wrapped around a live shipment dashboard — KPI cards, advanced filters, and a dense, sortable data grid.</p>
+          <ul class="feat mt-4 space-y-0.5">
+            <li><i data-lucide="check-circle-2" class="w-4 h-4"></i> Collapsible sidebar rail with hover fly-out menus</li>
+            <li><i data-lucide="check-circle-2" class="w-4 h-4"></i> KPI cards · advanced filters · sortable shipment grid</li>
+            <li><i data-lucide="check-circle-2" class="w-4 h-4"></i> One-click <strong>light / dark</strong> theme toggle</li>
+            <li><i data-lucide="check-circle-2" class="w-4 h-4"></i> Token-driven design system, mapped to Tailwind utilities</li>
+          </ul>
+          <span class="btn btn-primary mt-5 self-start"><i data-lucide="arrow-right" class="w-4 h-4"></i> Open Branded Shell</span>
+        </div>
+      </div>
+    </a>
+  </section>
+
   <!-- ============ SPOTLIGHT: Air Export ============ -->
   <section>
     <div class="flex items-center gap-2 mb-3">
       <span class="tag tag-air"><i data-lucide="plane" class="w-3 h-3"></i> Air Export</span>
-      <span class="sec-eyebrow">Latest addition</span>
+      <span class="sec-eyebrow">Air freight RFQ</span>
     </div>
     <a href="air-export/mockup/air-export-quote-request.html" class="gcard">
       <div class="grid md:grid-cols-2">
@@ -249,7 +284,7 @@
   <div class="mx-auto max-w-6xl px-4 py-7 flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-slate-500">
     <span class="chip"><i data-lucide="package" class="w-3.5 h-3.5"></i> Cargostar</span>
     <span class="flex items-center gap-1.5"><i data-lucide="info" class="w-3.5 h-3.5"></i> Interactive prototypes — sample data, no live booking.</span>
-    <span class="flex items-center gap-1.5"><i data-lucide="palette" class="w-3.5 h-3.5"></i> One shared design system · brand <code class="text-slate-600">#2A3E8A</code>.</span>
+    <span class="flex items-center gap-1.5"><i data-lucide="palette" class="w-3.5 h-3.5"></i> One shared design system · brand <code class="text-slate-600">#2A3E8A</code> · light &amp; dark.</span>
     <span class="ml-auto flex items-center gap-1.5"><i data-lucide="monitor" class="w-3.5 h-3.5"></i> Best viewed on desktop; fully responsive on tablet &amp; mobile.</span>
   </div>
 </footer>
